@@ -1,6 +1,8 @@
-use avian3d::prelude::ShapeCaster;
-use avian3d::math::{Scalar, Vector, PI};
+use bevy_inspector_egui::InspectorOptions;
+use avian3d::prelude::*;
+use avian3d::math::{AdjustPrecision, Quaternion, Scalar, Vector, PI};
 use avian3d::prelude::{Collider, RigidBody};
+use bevy::input::common_conditions::input_just_pressed;
 use bevy::input::keyboard::KeyboardInput;
 use bevy::input::mouse::MouseMotion;
 use bevy::math::AspectRatio;
@@ -8,6 +10,9 @@ use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, PrimaryWindow};
 use bevy_inspector_egui::egui::CursorGrab;
 use bevy_inspector_egui::egui::debug_text::print;
+use bevy_inspector_egui::prelude::ReflectInspectorOptions;
+use leafwing_input_manager::prelude::ActionState;
+use crate::core::controls::{PlayerActions, PlayerActionsMarker};
 use crate::core::helpers::{text, toggle_grabmode};
 
 pub struct PlayerPlugin;
@@ -16,6 +21,9 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(PlayerSettings::default())
+            .insert_resource(DampingFactorResource(0.9))
+            .init_resource::<DampingFactorResource>()
+            .register_type::<DampingFactorResource>()
             .add_systems(Startup, (
                 initialize_grab,
                 spawn_player,
@@ -24,8 +32,20 @@ impl Plugin for PlayerPlugin {
             .add_systems(Update, (
                 look_player,
                 update_player_ui,
-                cursor_grab
+                cursor_grab,
+                restart_player.run_if(input_just_pressed(KeyCode::KeyR))
             ))
+            .add_systems(Update, (
+                update_grounded,
+                apply_gravity,
+                move_player,
+                apply_movement_damping
+                ).chain()
+            )
+            .add_systems(
+                PostProcessCollisions,
+                kinematic_controller_collisions,
+            )
         ;
     }
 }
@@ -49,33 +69,115 @@ impl Default for PlayerSettings {
     }
 }
 
+/// A marker component indicating that an entity is using a character controller.
+#[derive(Component)]
+pub struct CharacterController;
+
+/// A marker component indicating that an entity is on the ground.
 #[derive(Component)]
 #[component(storage = "SparseSet")]
 pub struct Grounded;
 
+/// The acceleration used for character movement.
 #[derive(Component)]
-pub struct Movement {
-    pub acceleration: Scalar,
-    pub damping: Scalar,
-    pub jump_impulse: Scalar,
-    pub slope_angle: Scalar,
-    pub gravity: Vector
+pub struct MovementAcceleration(Scalar);
+
+/// The damping factor used for slowing down movement.
+#[derive(Component)]
+pub struct MovementDampingFactor(Scalar);
+
+/// The strength of a jump.
+#[derive(Component)]
+pub struct JumpImpulse(Scalar);
+
+/// The gravitational acceleration used for a character controller.
+#[derive(Component)]
+pub struct ControllerGravity(Vector);
+
+/// The maximum angle a slope can have for a character controller
+/// to be able to climb and jump. If the slope is steeper than this angle,
+/// the character will slide down.
+#[derive(Component)]
+pub struct MaxSlopeAngle(Scalar);
+
+/// A bundle that contains the components needed for a basic
+/// kinematic character controller.
+#[derive(Bundle)]
+pub struct CharacterControllerBundle {
+    character_controller: CharacterController,
+    rigid_body: RigidBody,
+    collider: Collider,
+    ground_caster: ShapeCaster,
+    gravity: ControllerGravity,
+    movement: MovementBundle,
 }
 
-impl Movement {
-    pub fn new(acceleration: Scalar, damping: Scalar, jump_impulse: Scalar, slope_angle: Scalar, gravity: Vector) -> Self {
-        Self { acceleration, damping, jump_impulse, slope_angle, gravity }
+/// A bundle that contains components for character movement.
+#[derive(Bundle)]
+pub struct MovementBundle {
+    acceleration: MovementAcceleration,
+    damping: MovementDampingFactor,
+    jump_impulse: JumpImpulse,
+    max_slope_angle: MaxSlopeAngle,
+}
+
+impl MovementBundle {
+    pub const fn new(
+        acceleration: Scalar,
+        damping: Scalar,
+        jump_impulse: Scalar,
+        max_slope_angle: Scalar,
+    ) -> Self {
+        Self {
+            acceleration: MovementAcceleration(acceleration),
+            damping: MovementDampingFactor(damping),
+            jump_impulse: JumpImpulse(jump_impulse),
+            max_slope_angle: MaxSlopeAngle(max_slope_angle),
+        }
     }
 }
 
-impl Default for Movement {
+impl Default for MovementBundle {
     fn default() -> Self {
-        Self::new(30.0, 0.9, 7.0, PI * 0.45, Vector::NEG_Y * 9.81 * 2.0)
+        Self::new(30.0, 0.9, 7.0, PI * 0.45)
+    }
+}
+
+impl CharacterControllerBundle {
+    pub fn new(collider: Collider, gravity: Vector) -> Self {
+        // Create shape caster as a slightly smaller version of collider
+        let mut caster_shape = collider.clone();
+        caster_shape.set_scale(Vector::ONE * 0.99, 10);
+
+        Self {
+            character_controller: CharacterController,
+            rigid_body: RigidBody::Kinematic,
+            collider,
+            ground_caster: ShapeCaster::new(
+                caster_shape,
+                Vector::ZERO,
+                Quaternion::default(),
+                Dir3::NEG_Y,
+            )
+                .with_max_distance(0.2),
+            gravity: ControllerGravity(gravity),
+            movement: MovementBundle::default(),
+        }
+    }
+
+    pub fn with_movement(
+        mut self,
+        acceleration: Scalar,
+        damping: Scalar,
+        jump_impulse: Scalar,
+        max_slope_angle: Scalar,
+    ) -> Self {
+        self.movement = MovementBundle::new(acceleration, damping, jump_impulse, max_slope_angle);
+        self
     }
 }
 
 #[derive(Component, Default)]
-#[require(Movement, RigidBody, Collider, ShapeCaster)]
 pub struct Player {
     pub id: usize
 }
@@ -118,6 +220,8 @@ pub fn spawn_player(
 
     commands.spawn((
         Player::new(0),
+        CharacterControllerBundle::new(Collider::capsule(0.4, 1.0), Vector::NEG_Y * 9.81 * 2.0)
+            .with_movement(30.0, 0.92, 7.0, (30.0 as Scalar).to_radians()),
         Name::new("Player")
     ))
         .with_child(Camera3d::default());
@@ -173,6 +277,264 @@ pub fn look_player(
     }
 }
 
+const SPEED: f32 = 100.0;
+
+fn move_player(
+    time: Res<Time>,
+    mut player: Query<(
+        &MovementAcceleration,
+        &JumpImpulse,
+        &mut LinearVelocity,
+        Has<Grounded>
+    )>,
+    camera: Query<&Transform, With<Camera>>,
+    actions: Query<&ActionState<PlayerActions>, With<PlayerActionsMarker>>
+) {
+    let delta = time.delta_secs_f64().adjust_precision();
+
+    if let Ok((movement, jump, mut linear, grounded)) = player.get_single_mut() {
+        let actions = actions.single();
+        let movement_input = actions.clamped_axis_pair(&PlayerActions::Movement);
+        let camera = camera.single();
+
+        let forward = camera.forward() * movement_input.y * delta * SPEED;
+        let right = camera.right() * movement_input.x * delta * SPEED;
+
+        linear.x += forward.x;
+        linear.z += forward.z;
+
+        if actions.just_pressed(&PlayerActions::Jump) {
+            if grounded {
+                linear.y = jump.0;
+            }
+        }
+    }
+}
+
+fn apply_gravity(
+    time: Res<Time>,
+    mut player: Query<(&ControllerGravity, &mut LinearVelocity)>
+) {
+    let delta = time.delta_secs_f64().adjust_precision();
+
+    if let Ok((gravity, mut linear)) = player.get_single_mut() {
+        linear.0 += gravity.0 * delta;
+    }
+}
+
+#[derive(Reflect, Resource, Clone, InspectorOptions)]
+#[reflect(Resource, InspectorOptions)]
+pub struct DampingFactorResource(
+    #[inspector(min = 0.0, max = 1.0)]
+    pub Scalar
+);
+
+impl Default for DampingFactorResource {
+    fn default() -> Self {
+        Self(0.9)
+    }
+}
+
+fn set_damping(
+    mut player: Query<&mut MovementDampingFactor, With<Player>>,
+    damp_resource: Res<DampingFactorResource>
+) {
+    if let Ok((mut damping_factor)) = player.get_single_mut() {
+        damping_factor.0 = damp_resource.0;
+    }
+}
+
+fn apply_movement_damping(
+    mut player: Query<(&MovementDampingFactor, &mut LinearVelocity)>
+) {
+    if let Ok((damping_factor, mut linear)) = player.get_single_mut() {
+        linear.x *= damping_factor.0;
+        linear.z *= damping_factor.0;
+    }
+}
+
+fn update_grounded(
+    mut commands: Commands,
+    mut query: Query<
+        (Entity, &ShapeHits, &Rotation, Option<&MaxSlopeAngle>),
+        With<CharacterController>
+    >
+) {
+    for (entity, hits, rotation, max_slope_angle) in &mut query {
+        let is_grounded = hits.iter().any(|hit| {
+            if let Some(angle) = max_slope_angle {
+                (rotation * -hit.normal2).angle_between(Vector::Y).abs() <= angle.0
+            } else {
+                true
+            }
+        });
+
+        if is_grounded {
+            commands.entity(entity).insert(Grounded);
+        } else {
+            commands.entity(entity).remove::<Grounded>();
+        }
+    }
+}
+
+#[allow(clippy::type_complexity)]
+fn kinematic_controller_collisions(
+    collisions: Res<Collisions>,
+    bodies: Query<&RigidBody>,
+    collider_parents: Query<&ColliderParent, Without<Sensor>>,
+    mut character_controllers: Query<
+        (
+            &mut Position,
+            &Rotation,
+            &mut LinearVelocity,
+            Option<&MaxSlopeAngle>,
+        ),
+        (With<RigidBody>, With<CharacterController>),
+    >,
+    time: Res<Time>,
+) {
+    // Iterate through collisions and move the kinematic body to resolve penetration
+    for contacts in collisions.iter() {
+        // Get the rigid body entities of the colliders (colliders could be children)
+        let Ok([collider_parent1, collider_parent2]) =
+            collider_parents.get_many([contacts.entity1, contacts.entity2])
+        else {
+            continue;
+        };
+
+        // Get the body of the character controller and whether it is the first
+        // or second entity in the collision.
+        let is_first: bool;
+
+        let character_rb: RigidBody;
+        let is_other_dynamic: bool;
+
+        let (mut position, rotation, mut linear_velocity, max_slope_angle) =
+            if let Ok(character) = character_controllers.get_mut(collider_parent1.get()) {
+                is_first = true;
+                character_rb = *bodies.get(collider_parent1.get()).unwrap();
+                is_other_dynamic = bodies
+                    .get(collider_parent2.get())
+                    .is_ok_and(|rb| rb.is_dynamic());
+                character
+            } else if let Ok(character) = character_controllers.get_mut(collider_parent2.get()) {
+                is_first = false;
+                character_rb = *bodies.get(collider_parent2.get()).unwrap();
+                is_other_dynamic = bodies
+                    .get(collider_parent1.get())
+                    .is_ok_and(|rb| rb.is_dynamic());
+                character
+            } else {
+                continue;
+            };
+
+        // This system only handles collision response for kinematic character controllers.
+        if !character_rb.is_kinematic() {
+            continue;
+        }
+
+        // Iterate through contact manifolds and their contacts.
+        // Each contact in a single manifold shares the same contact normal.
+        for manifold in contacts.manifolds.iter() {
+            let normal = if is_first {
+                -manifold.global_normal1(rotation)
+            } else {
+                -manifold.global_normal2(rotation)
+            };
+
+            let mut deepest_penetration: Scalar = Scalar::MIN;
+
+            // Solve each penetrating contact in the manifold.
+            for contact in manifold.contacts.iter() {
+                if contact.penetration > 0.0 {
+                    position.0 += normal * contact.penetration;
+                }
+                deepest_penetration = deepest_penetration.max(contact.penetration);
+            }
+
+            // For now, this system only handles velocity corrections for collisions against static geometry.
+            if is_other_dynamic {
+                continue;
+            }
+
+            // Determine if the slope is climbable or if it's too steep to walk on.
+            let slope_angle = normal.angle_between(Vector::Y);
+            let climbable = max_slope_angle.is_some_and(|angle| slope_angle.abs() <= angle.0);
+
+            if deepest_penetration > 0.0 {
+                // If the slope is climbable, snap the velocity so that the character
+                // up and down the surface smoothly.
+                if climbable {
+                    // Points in the normal's direction in the XZ plane.
+                    let normal_direction_xz =
+                        normal.reject_from_normalized(Vector::Y).normalize_or_zero();
+
+                    // The movement speed along the direction above.
+                    let linear_velocity_xz = linear_velocity.dot(normal_direction_xz);
+
+                    // Snap the Y speed based on the speed at which the character is moving
+                    // up or down the slope, and how steep the slope is.
+                    //
+                    // A 2D visualization of the slope, the contact normal, and the velocity components:
+                    //
+                    //             ╱
+                    //     normal ╱
+                    // *         ╱
+                    // │   *    ╱   velocity_x
+                    // │       * - - - - - -
+                    // │           *       | velocity_y
+                    // │               *   |
+                    // *───────────────────*
+
+                    let max_y_speed = -linear_velocity_xz * slope_angle.tan();
+                    linear_velocity.y = linear_velocity.y.max(max_y_speed);
+                } else {
+                    // The character is intersecting an unclimbable object, like a wall.
+                    // We want the character to slide along the surface, similarly to
+                    // a collide-and-slide algorithm.
+
+                    // Don't apply an impulse if the character is moving away from the surface.
+                    if linear_velocity.dot(normal) > 0.0 {
+                        continue;
+                    }
+
+                    // Slide along the surface, rejecting the velocity along the contact normal.
+                    let impulse = linear_velocity.reject_from_normalized(normal);
+                    linear_velocity.0 = impulse;
+                }
+            } else {
+                // The character is not yet intersecting the other object,
+                // but the narrow phase detected a speculative collision.
+                //
+                // We need to push back the part of the velocity
+                // that would cause penetration within the next frame.
+
+                let normal_speed = linear_velocity.dot(normal);
+
+                // Don't apply an impulse if the character is moving away from the surface.
+                if normal_speed > 0.0 {
+                    continue;
+                }
+
+                // Compute the impulse to apply.
+                let impulse_magnitude =
+                    normal_speed - (deepest_penetration / time.delta_secs_f64().adjust_precision());
+                let mut impulse = impulse_magnitude * normal;
+
+                // Apply the impulse differently depending on the slope angle.
+                if climbable {
+                    // Avoid sliding down slopes.
+                    linear_velocity.y -= impulse.y.min(0.0);
+                } else {
+                    // Avoid climbing up walls.
+                    impulse.y = impulse.y.max(0.0);
+                    linear_velocity.0 -= impulse;
+                }
+            }
+        }
+    }
+}
+
 #[derive(Debug, Component)]
 pub struct PlayerUi(pub usize);
 
@@ -187,7 +549,7 @@ pub fn spawn_player_ui(
             justify_content: JustifyContent::Center,
             margin: UiRect::all(Val::Percent(0.5)),
             padding: UiRect::all(Val::Percent(0.5)),
-            width: Val::Percent(25.0),
+            width: Val::Percent(30.0),
             aspect_ratio: Some(3.0),
             ..Default::default()
         },
@@ -206,33 +568,51 @@ pub fn spawn_player_ui(
             text("C-Rotation: ()", 16.0, None),
             PlayerUi(2)
         ));
+        parent.spawn((
+            text("Velocity: ()", 16.0, None),
+            PlayerUi(3)
+        ));
     });
 }
 
 pub fn update_player_ui(
-    player: Query<&Transform, With<Player>>,
+    player: Query<(&Transform, &LinearVelocity), With<Player>>,
     camera: Query<&Transform, With<Camera>>,
     mut ui: Query<(&mut Text, &PlayerUi)>,
 ) {
-    if let Ok(player) = player.get_single() {
+    if let Ok((transform, linear)) = player.get_single() {
         if let Ok(camera) = camera.get_single() {
             for (mut text, id) in ui.iter_mut() {
                 match id.0 {
                     0 => {
-                        let t = player.translation;
+                        let t = transform.translation;
                         text.0 = format!("Position: ({:.2}, {:.2}, {:.2})", t.x, t.y, t.z);
                     },
                     1 => {
-                        let r = player.rotation;
+                        let r = transform.rotation;
                         text.0 = format!("Rotation: ({:.2}, {:.2}, {:.2})", r.x, r.y, r.z);
                     },
                     2 => {
                         let d = camera.rotation;
                         text.0 = format!("Rotation: ({:.2}, {:.2}, {:.2})", d.x, d.y, d.z);
+                    },
+                    3 => {
+                        let v = linear;
+                        text.0 = format!("Velocity: ({:.2}, {:.2}, {:.2})", v.x, v.y, v.z);
                     }
                     _ => ()
                 }
             }
         }
+    }
+}
+
+pub fn restart_player(
+    mut player: Query<(&mut Transform, &mut LinearVelocity), With<Player>>
+) {
+    if let Ok((mut transform, mut linear)) = player.get_single_mut() {
+        transform.translation = Vec3::new(0.0, 10.0, 0.0);
+        linear.x = 0.0;
+        linear.z = 0.0;
     }
 }
