@@ -1,4 +1,5 @@
 mod core;
+mod cars;
 
 use bevy::prelude::*;
 use bevy::render::RenderPlugin;

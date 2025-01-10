@@ -1,7 +1,5 @@
 use bevy::prelude::*;
-use leafwing_input_manager::{Actionlike, InputManagerBundle};
-use leafwing_input_manager::plugin::InputManagerPlugin;
-use leafwing_input_manager::prelude::{GamepadStick, InputMap, VirtualDPad, VirtualDPad3D};
+use leafwing_input_manager::prelude::*;
 
 pub struct ControlPlugin;
 impl Plugin for ControlPlugin {

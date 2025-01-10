@@ -1,17 +1,11 @@
-use bevy_inspector_egui::InspectorOptions;
 use avian3d::prelude::*;
 use avian3d::math::{AdjustPrecision, Quaternion, Scalar, Vector, PI};
-use avian3d::prelude::{Collider, RigidBody};
 use bevy::input::common_conditions::input_just_pressed;
-use bevy::input::keyboard::KeyboardInput;
 use bevy::input::mouse::MouseMotion;
-use bevy::math::AspectRatio;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, PrimaryWindow};
-use bevy_inspector_egui::egui::CursorGrab;
-use bevy_inspector_egui::egui::debug_text::print;
-use bevy_inspector_egui::prelude::ReflectInspectorOptions;
-use leafwing_input_manager::prelude::ActionState;
+use bevy_inspector_egui::prelude::*;
+use leafwing_input_manager::prelude::*;
 use crate::core::controls::{PlayerActions, PlayerActionsMarker};
 use crate::core::helpers::{text, toggle_grabmode};
 
@@ -195,8 +189,8 @@ pub fn spawn_player(
 ) {
     commands.spawn((
         RigidBody::Static,
-        Collider::cylinder(16.0, 0.1),
-        Mesh3d(meshes.add(Cylinder::new(16.0, 0.1))),
+        Collider::cylinder(100.0, 1.0),
+        Mesh3d(meshes.add(Cylinder::new(100.0, 1.0))),
         MeshMaterial3d(materials.add(Color::WHITE)),
         Transform::from_xyz(0.0, -1.0, 0.0),
     ));
@@ -211,7 +205,7 @@ pub fn spawn_player(
     commands.spawn((
         PointLight {
             intensity: 2_000_000.0,
-            range: 50.0,
+            range: 5000.0,
             shadows_enabled: true,
             ..Default::default()
         },
@@ -299,9 +293,10 @@ fn move_player(
 
         let forward = camera.forward() * movement_input.y * delta * SPEED;
         let right = camera.right() * movement_input.x * delta * SPEED;
+        let right = right.normalize_or_zero();
 
-        linear.x += forward.x;
-        linear.z += forward.z;
+        linear.x += forward.x + right.x;
+        linear.z += forward.z + right.z;
 
         if actions.just_pressed(&PlayerActions::Jump) {
             if grounded {
@@ -339,7 +334,7 @@ fn set_damping(
     mut player: Query<&mut MovementDampingFactor, With<Player>>,
     damp_resource: Res<DampingFactorResource>
 ) {
-    if let Ok((mut damping_factor)) = player.get_single_mut() {
+    if let Ok(mut damping_factor) = player.get_single_mut() {
         damping_factor.0 = damp_resource.0;
     }
 }
