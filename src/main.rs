@@ -1,10 +1,11 @@
-mod core;
-mod cars;
+pub mod core;
+pub mod cars;
 
 use bevy::prelude::*;
 use bevy::render::RenderPlugin;
 use bevy::render::settings::{Backends, RenderCreation, WgpuSettings};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use crate::cars::CarPlugin;
 use crate::core::CorePlugin;
 
 fn main() {
@@ -27,7 +28,10 @@ fn main() {
             })
         )
         .add_plugins(WorldInspectorPlugin::new())
-        .add_plugins(CorePlugin)
+        .add_plugins((
+            CorePlugin,
+            CarPlugin
+            ))
         .run();
 
 }

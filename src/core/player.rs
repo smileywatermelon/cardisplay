@@ -21,11 +21,9 @@ impl Plugin for PlayerPlugin {
             .add_systems(Startup, (
                 initialize_grab,
                 spawn_player,
-                spawn_player_ui,
             ))
             .add_systems(Update, (
                 look_player,
-                update_player_ui,
                 cursor_grab,
                 restart_player.run_if(input_just_pressed(KeyCode::KeyR))
             ))

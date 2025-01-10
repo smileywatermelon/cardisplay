@@ -21,11 +21,13 @@ pub enum PlayerActions {
 pub struct PlayerActionsMarker;
 
 fn player_controls(mut commands: Commands) {
-    let input_map = InputMap::default()
-        .with_dual_axis(PlayerActions::Movement, VirtualDPad::wasd())
-        .with(PlayerActions::Jump, KeyCode::Space)
-        .with_dual_axis(PlayerActions::Movement, GamepadStick::LEFT)
-        .with(PlayerActions::Jump, GamepadButton::South);
+    let mut input_map = InputMap::default();
+
+    input_map.insert_dual_axis(PlayerActions::Movement, VirtualDPad::wasd());
+    input_map.insert(PlayerActions::Jump, KeyCode::Space);
+
+    input_map.insert_dual_axis(PlayerActions::Movement, GamepadStick::LEFT);
+    input_map.insert(PlayerActions::Jump, GamepadButton::South);
 
     commands.spawn((
         InputManagerBundle::with_map(input_map),
