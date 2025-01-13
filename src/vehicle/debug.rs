@@ -1,6 +1,5 @@
 use bevy::prelude::*;
-use crate::cars::parts::{Engine, Transmission};
-use crate::cars::wheels::{Brakes, Wheels};
+use crate::vehicle::parts::prelude::*;
 
 #[derive(Component)]
 pub struct CarDebugMarker(pub usize);
@@ -23,7 +22,7 @@ pub(crate) fn spawn_car_debug(mut commands: Commands) {
         Node {
             display: Display::Flex,
             flex_direction: FlexDirection::Column,
-            width: Val::Percent(30.0),
+            width: Val::Percent(20.0),
             ..default()
         },
         BackgroundColor(Color::srgb_u8(108, 121, 128)),

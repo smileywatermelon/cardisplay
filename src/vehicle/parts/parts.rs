@@ -5,6 +5,33 @@ use bevy::prelude::*;
 pub struct Engine {
     pub rpm: f32,
     pub throttle: f32,
+    pub initial: f32,
+    pub on: bool
+}
+
+impl Engine {
+    pub fn new(initial: f32) -> Self {
+        Self {
+            rpm: initial.clone(),
+            throttle: 0.0,
+            initial,
+            on: false
+        }
+    }
+
+    pub fn set_throttle(&mut self, throttle: f32) {
+        self.throttle = throttle;
+    }
+
+    pub fn turn_on(&mut self) {
+        self.on = true;
+        self.rpm = self.initial;
+    }
+
+    pub fn turn_off(&mut self) {
+        self.on = false;
+        self.rpm = 0.0;
+    }
 }
 
 #[derive(Component, Default)]
@@ -61,6 +88,20 @@ impl Transmission {
         if !(self.selected == -1) {
             self.selected -= 1
         }
+    }
+
+    pub fn turn_off(&mut self) {
+        self.selected = 0;
+    }
+
+    /// Returns `-1.0` if true, `1.0` if false
+    ///
+    /// Used for `Wheels` calculation
+    pub fn is_reverse(&self) -> f32 {
+        if self.selected == -1 {
+            return -1.0;
+        }
+        1.0
     }
 }
 

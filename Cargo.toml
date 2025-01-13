@@ -10,9 +10,12 @@ opt-level = 1
 opt-level = 3
 
 [dependencies]
-avian3d = "0.2"
-bevy = "0.15.0"
-bevy-inspector-egui = "0.28.0"
-bevy_kira_audio = "0.22.0"
+avian3d = "0.2.0"
+bevy-inspector-egui = "0.28.1"
 leafwing-input-manager = "0.16.0"
-rand = "0.8.5"
+mevy = "0.1.2"
+rusty-xinput = "1.3.0"
+
+[dependencies.bevy]
+version = "0.15.1"
+features = ["wav"]

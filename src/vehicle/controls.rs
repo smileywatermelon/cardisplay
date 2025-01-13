@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
-use crate::cars::car::Car;
-use crate::cars::parts::{Engine, Transmission};
-use crate::cars::wheels::Brakes;
+use crate::vehicle::car::Car;
+use crate::vehicle::parts::prelude::*;
 
 #[derive(Actionlike, Clone, Copy, PartialEq, Eq, Hash, Debug, Reflect)]
 pub enum CarActions {
+    #[actionlike[Axis]]
     Throttle,
     Brake,
     GearUp,
@@ -14,7 +14,7 @@ pub enum CarActions {
 
 pub(crate) fn spawn_car_actions(mut commands: Commands) {
     let input_map = InputMap::default()
-        .with(CarActions::Throttle, GamepadButton::RightTrigger2)
+        .with_axis(CarActions::Throttle, GamepadAxis::LeftStickY)
         .with(CarActions::Brake, GamepadButton::LeftTrigger2)
         .with(CarActions::GearUp, GamepadButton::DPadUp)
         .with(CarActions::GearDown, GamepadButton::DPadDown);
@@ -26,17 +26,18 @@ pub(crate) fn handle_car_actions(
     actions: Query<&ActionState<CarActions>>,
     mut car: Query<(&Car, &mut Engine, &mut Transmission, &mut Brakes)>
 ) {
-    if let Ok((car, mut engine, mut trans, mut brakes)) = car.get_single_mut() {
+    if let Ok((car, mut engine, mut transmission, mut brakes)) = car.get_single_mut() {
         let actions = actions.single();
 
-        engine.throttle = actions.pressed(&CarActions::Throttle) as i32 as f32;
+        engine.throttle = actions.clamped_value(&CarActions::Throttle);
+        engine.rpm = (engine.initial * (engine.throttle * 3.0)) + engine.initial;
         brakes.pressure = actions.pressed(&CarActions::Brake) as i32 as f32;
 
         if actions.just_pressed(&CarActions::GearUp) {
-            trans.gear_up();
+            transmission.gear_up();
         }
         if actions.just_pressed(&CarActions::GearDown) {
-            trans.gear_down();
+            transmission.gear_down();
         }
     }
 }

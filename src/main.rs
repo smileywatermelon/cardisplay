@@ -1,12 +1,18 @@
 pub mod core;
-pub mod cars;
+pub mod vehicle;
+mod player;
+mod world;
+mod menus;
 
 use bevy::prelude::*;
 use bevy::render::RenderPlugin;
 use bevy::render::settings::{Backends, RenderCreation, WgpuSettings};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use crate::cars::CarPlugin;
+use crate::vehicle::VehiclePlugin;
 use crate::core::CorePlugin;
+use crate::menus::MenuPlugin;
+use crate::player::PlayerPlugin;
+use crate::world::WorldPlugin;
 
 fn main() {
     App::new()
@@ -30,7 +36,10 @@ fn main() {
         .add_plugins(WorldInspectorPlugin::new())
         .add_plugins((
             CorePlugin,
-            CarPlugin
+            MenuPlugin,
+            WorldPlugin,
+            PlayerPlugin,
+            VehiclePlugin
             ))
         .run();
 
