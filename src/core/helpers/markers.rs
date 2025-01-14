@@ -49,7 +49,7 @@ impl AudioConst {
 
     // Defined Audio Constants
 
-    pub const ENGINE_AUDIO: Self = Self::new_const_loop("audio/engine.ogg", 0);
+    pub const ENGINE_AUDIO: Self = Self::new_const_loop("audio/engine-2.ogg", 0);
 }
 
 #[derive(Component)]

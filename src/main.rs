@@ -1,8 +1,8 @@
 pub mod core;
 pub mod vehicle;
-mod player;
-mod world;
-mod menus;
+pub mod player;
+pub mod world;
+pub mod menus;
 
 use bevy::prelude::*;
 use bevy::render::RenderPlugin;

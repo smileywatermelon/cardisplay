@@ -3,16 +3,15 @@ use crate::core::states::GameState;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default, SubStates)]
 #[source(GameState = GameState::MainMenu)]
-pub enum MainMenu {
+pub enum MainMenuState {
     #[default]
     Main,
     Settings,
-    Exit,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default, SubStates)]
-#[source(MainMenu = MainMenu::Settings)]
-pub enum SettingsMenu {
+#[source(MainMenuState = MainMenuState::Settings)]
+pub enum SettingsMenuState {
     #[default]
     Settings,
     Video,

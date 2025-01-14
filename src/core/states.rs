@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use crate::menus::states::{MainMenuState, SettingsMenuState};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default, States)]
 pub enum GameState {
@@ -36,7 +37,7 @@ pub(crate) fn update_current_state(
     game: Res<State<GameState>>,
     mut current_state: Query<&mut Text, With<CurrentStateMarker>>
 ) {
-    let state = match game.get() {
+    let game = match game.get() {
         GameState::Loading => "Loading",
         GameState::MainMenu => "MainMenu",
         GameState::SpawnWorld => "SpawnWorld",
@@ -45,8 +46,7 @@ pub(crate) fn update_current_state(
         GameState::Running => "Running",
         GameState::Paused => "Paused",
     };
-
     if let Ok(mut current_state) = current_state.get_single_mut() {
-        current_state.0 = state.to_string();
+        current_state.0 = game.to_string();
     }
 }

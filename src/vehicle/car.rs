@@ -50,7 +50,7 @@ pub(crate) fn update_engine_noise(
     for (mut audio_sink, id) in audio.iter_mut() {
         if id.0 == AudioConst::ENGINE_AUDIO.id {
             let engine = car.single();
-            let audio_factor = (engine.rpm / RPM_AUDIO_FACTOR).abs() ;
+            let audio_factor = (engine.rpm / engine.initial).abs() ;
 
             if audio_factor != 0.0 {
                 if audio_sink.is_paused() {
