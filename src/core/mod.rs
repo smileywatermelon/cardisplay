@@ -2,7 +2,6 @@ mod physics;
 mod camera;
 pub mod helpers;
 pub mod states;
-pub mod xinput;
 
 use bevy::prelude::*;
 use crate::core::camera::spawn_camera;

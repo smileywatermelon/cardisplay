@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use controls::{handle_kb_car_actions, CarActionsKeyboard};
 use leafwing_input_manager::plugin::InputManagerPlugin;
 use crate::core::states::GameState;
 use crate::vehicle::car::{spawn_car, spawn_engine_audio, update_engine_noise, update_wheel_rpm};
@@ -16,6 +17,7 @@ impl Plugin for VehiclePlugin {
     fn build(&self, app: &mut App) {
         app
             .add_plugins(InputManagerPlugin::<CarActions>::default())
+            .insert_resource(CarActionsKeyboard::default())
             .add_systems(OnEnter(GameState::SpawnVehicles), (
                 spawn_car,
                 spawn_car_actions,
@@ -25,6 +27,7 @@ impl Plugin for VehiclePlugin {
             .add_systems(Update, (
                 update_engine_noise,
                 handle_car_actions,
+                handle_kb_car_actions,
                 update_wheel_rpm,
                 update_car_debug
             ).run_if(in_state(GameState::Running)));

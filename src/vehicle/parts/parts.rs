@@ -66,6 +66,20 @@ impl Transmission {
         self.selected
     }
 
+    pub fn gear_string(&self) -> String {
+        match self.gear() {
+            -1 => {
+                "R".to_string()
+            },
+            0 => {
+                "N".to_string()
+            },
+            g => {
+                g.to_string()
+            }
+        }
+    }
+
     pub fn ratio(&self) -> f32 {
         match self.selected {
             -1 => -self.reverse,

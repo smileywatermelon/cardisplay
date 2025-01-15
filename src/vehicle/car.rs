@@ -14,6 +14,7 @@ pub(crate) fn spawn_car(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut game_state: ResMut<NextState<GameState>>
 ) {
     commands.spawn((
         Car(0),
@@ -27,28 +28,25 @@ pub(crate) fn spawn_car(
         Transform::from_xyz(10.0, 10.0, 15.0)
     ));
 
-
+    game_state.set(GameState::Running);
 }
 
 pub(crate) fn spawn_engine_audio(
     mut commands: Commands,
     assets: Res<AssetServer>,
-    mut game_state: ResMut<NextState<GameState>>,
 ) {
-    commands.spawn(AudioMarker::from_const(AudioConst::ENGINE_AUDIO, assets));
-
-    game_state.set(GameState::Running);
+    commands.spawn(AudioMarker::from_const(AudioConst::ENGINE_IDLE, &assets));
+    commands.spawn(AudioMarker::from_const(AudioConst::ENGINE_DRIVE_1, &assets));
+    commands.spawn(AudioMarker::from_const(AudioConst::ENGINE_DRIVE_2, &assets));
+    commands.spawn(AudioMarker::from_const(AudioConst::ENGINE_DRIVE_3, &assets));
 }
-
-/// What to divide `Engine.rpm` by for audio speed
-const RPM_AUDIO_FACTOR: f32 = 1000.0;
 
 pub(crate) fn update_engine_noise(
     car: Query<&Engine, With<Car>>,
-    mut audio: Query<(&mut AudioSink, &AudioId)>
+    mut audio: Query<(&AudioSink, &AudioId)>
 ) {
-    for (mut audio_sink, id) in audio.iter_mut() {
-        if id.0 == AudioConst::ENGINE_AUDIO.id {
+    for (audio_sink, id) in audio.iter_mut() {
+        if id.0 == AudioConst::ENGINE_IDLE.id {
             let engine = car.single();
             let audio_factor = (engine.rpm / engine.initial).abs() ;
 

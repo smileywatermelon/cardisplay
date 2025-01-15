@@ -14,7 +14,6 @@ avian3d = "0.2.0"
 bevy-inspector-egui = "0.28.1"
 leafwing-input-manager = "0.16.0"
 mevy = "0.1.2"
-rusty-xinput = "1.3.0"
 
 [dependencies.bevy]
 version = "0.15.1"

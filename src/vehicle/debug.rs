@@ -62,7 +62,7 @@ pub(crate) fn update_car_debug(
                 text.0 = format!("THR: {}", engine.throttle)
             },
             2 => {
-                text.0 = format!("Gear: {}", transmission.gear())
+                text.0 = format!("Gear: {}", transmission.gear_string())
             },
             3 => {
                 text.0 = format!("Brakes: {}", brakes.pressure)
