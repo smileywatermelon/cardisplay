@@ -6,7 +6,6 @@ impl Plugin for GamePhysicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
             PhysicsPlugins::default(),
-            PhysicsDebugPlugin::default(),
         ));
     }
 }

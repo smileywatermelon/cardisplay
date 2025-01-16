@@ -1,6 +1,4 @@
-
-use bevy::asset::Handle;
-use bevy::prelude::{Font, Text, TextFont, Window};
+use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
 
 pub fn toggle_grabmode(window: &mut Window) {
@@ -14,15 +12,4 @@ pub fn toggle_grabmode(window: &mut Window) {
             window.cursor_options.visible = true;
         }
     }
-}
-
-pub fn text<S: Into<String>>(text: S, font_size: f32, font: Option<Handle<Font>>) -> (Text, TextFont) {
-    (
-        Text::new(text),
-        TextFont {
-            font: font.unwrap_or_default(),
-            font_size,
-            ..Default::default()
-        }
-    )
 }

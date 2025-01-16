@@ -1,14 +1,14 @@
 use bevy::prelude::*;
-use controls::{handle_kb_car_actions, CarActionsKeyboard};
+use controls::CarActionsKeyboard;
 use leafwing_input_manager::plugin::InputManagerPlugin;
 use crate::core::states::GameState;
-use crate::vehicle::car::{spawn_car, spawn_engine_audio, update_engine_noise, update_wheel_rpm};
-use crate::vehicle::controls::{handle_car_actions, spawn_car_actions, CarActions};
+use crate::vehicle::car::{spawn_car, spawn_engine_audio, update_engine_noise, update_wheel_rpm, CarState};
+use crate::vehicle::controls::{handle_car_actions, handle_gamepad_pedals, handle_kb_pedals, spawn_car_actions, CarActions, CarPedalMode};
 use crate::vehicle::debug::{spawn_car_debug, update_car_debug};
 
 pub mod parts;
-mod car;
-mod controls;
+pub mod car;
+pub mod controls;
 mod debug;
 
 pub struct VehiclePlugin;
@@ -18,18 +18,19 @@ impl Plugin for VehiclePlugin {
         app
             .add_plugins(InputManagerPlugin::<CarActions>::default())
             .insert_resource(CarActionsKeyboard::default())
+            .insert_state(CarState::default())
+            .insert_state(CarPedalMode::default())
             .add_systems(OnEnter(GameState::SpawnVehicles), (
                 spawn_car,
                 spawn_car_actions,
                 spawn_engine_audio,
-                spawn_car_debug
             ))
             .add_systems(Update, (
                 update_engine_noise,
                 handle_car_actions,
-                handle_kb_car_actions,
+                handle_gamepad_pedals.run_if(in_state(CarPedalMode::Controller)),
+                handle_kb_pedals.run_if(in_state(CarPedalMode::Keyboard)),
                 update_wheel_rpm,
-                update_car_debug
-            ).run_if(in_state(GameState::Running)));
+            ).run_if(in_state(GameState::Running).and(in_state(CarState::InCar))));
     }
 }

@@ -12,10 +12,11 @@ pub(crate) fn spawn_world(
 ) {
     commands.spawn((
         RigidBody::Static,
-        ColliderConstructorHierarchy::new(ColliderConstructor::ConvexDecompositionFromMesh),
-        SceneRoot(assets.load("mesh/track.glb#Scene0")),
+        Collider::cuboid(100.0, 100.0, 1.0),
+        Mesh3d(meshes.add(Cuboid::new(100.0, 100.0, 1.0))),
         MeshMaterial3d(materials.add(Color::WHITE)),
-        Transform::from_xyz(0.0, -1.0, 0.0),
+        Transform::from_xyz(0.0, -10.0, 0.0),
+        Name::new("Platform")
     ));
 
     commands.spawn((

@@ -7,44 +7,35 @@ use crate::player::controls::PlayerActions;
 
 #[derive(Component, Clone, Copy, Debug)]
 #[require(PlayerSettings)]
-pub struct Player {
-    pub id: u8,
-    pub gamepad: Entity,
-}
+pub struct Player;
 
 impl Player {
-    pub fn single(id: u8, gamepad: Entity) -> (Self, InputMap<PlayerActions>) {
-        let player = Self { id, gamepad };
+    pub fn new() -> (Self, InputMap<PlayerActions>) {
+        let player = Self;
         (
             player,
-            PlayerActions::single(player),
+            PlayerActions::new(player),
         )
-    }
-
-    pub fn multiplayer(count: u8, gamepads: Vec<Entity>) -> Vec<(Self, InputMap<PlayerActions>)> {
-        let mut players = Vec::default();
-
-        for id in 0..count {
-            players.push(Self::single(id, gamepads[id as usize]))
-        }
-
-        players
     }
 }
 
-pub(crate) fn spawn_player(
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default, States)]
+pub enum PlayerSetup {
+    #[default]
+    Single,
+    Multiplayer,
+}
+
+pub(crate) fn spawn_players(
     mut commands: Commands,
     gamepad: Query<(Entity, &Gamepad)>,
     mut game_state: ResMut<NextState<GameState>>,
 ) {
-    for (entity, gamepad) in gamepad.iter() {
-        commands.spawn((
-            Player::single(0, entity),
-            PlayerControllerBundle::new(Collider::cylinder(1.0, 4.0)),
-            Name::new("Player")
-        ));
-    }
-
+    commands.spawn((
+        Player::new(),
+        PlayerControllerBundle::new(Collider::cylinder(1.0, 4.0)),
+        Name::new("Player")
+    ));
 
     game_state.set(GameState::SpawnVehicles)
 }

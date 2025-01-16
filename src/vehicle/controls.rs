@@ -5,14 +5,24 @@ use crate::vehicle::parts::prelude::*;
 
 #[derive(Actionlike, Clone, Copy, PartialEq, Eq, Hash, Debug, Reflect)]
 pub enum CarActions {
+    /// `Right Trigger` by default
     #[actionlike(Axis)]
     Throttle,
+    /// `W` by default
     KThrottle,
+    /// `Left Trigger` by default
     #[actionlike(Axis)]
     Brake,
+    /// `S` by default
     KBrake,
+    /// `West` | `Space` by default, X (Xbox), ▢ (PS)
+    HandBrake,
+    /// `Right Bumper` | `Arrow Up` by default, RB (Xbox), R1 (PS)
     GearUp,
+    /// `Left Bumper` | `Arrow Down` by default, LB (Xbox), L1 (PS)
     GearDown,
+    /// `Start` | `Tab` by default, ≡ (Xbox)
+    ToggleOn,
 }
 
 #[derive(Resource, Default)]
@@ -27,45 +37,70 @@ pub(crate) fn spawn_car_actions(mut commands: Commands) {
         .with_axis(CarActions::Brake, GamepadAxis::LeftZ)
         .with(CarActions::GearUp, GamepadButton::DPadUp)
         .with(CarActions::GearDown, GamepadButton::DPadDown)
+        .with(CarActions::ToggleOn, GamepadButton::Start)
         
         .with(CarActions::KThrottle, KeyCode::KeyW)
         .with(CarActions::KBrake, KeyCode::KeyS)
         .with(CarActions::GearUp, KeyCode::KeyE)
-        .with(CarActions::GearDown, KeyCode::KeyQ)
-        ;
+        .with(CarActions::GearDown, KeyCode::KeyQ);
 
-    println!("Actions Spawned");
-    commands.spawn(InputManagerBundle::with_map(input_map));
+    commands.spawn((InputManagerBundle::with_map(input_map), Name::new("CarActions")));
 }
 
 pub(crate) fn handle_car_actions(
     actions: Query<&ActionState<CarActions>>,
-    mut car: Query<(&Car, &mut Engine, &mut Transmission, &mut Brakes)>
+    mut car: Query<(&mut Engine, &mut Transmission, &mut Brakes), With<Car>>,
 ) {
-    if let Ok((car, mut engine, mut transmission, mut brakes)) = car.get_single_mut() {
+    if let Ok((mut engine, mut transmission, mut brakes)) = car.get_single_mut() {
         let actions = actions.single();
 
+        // Start/Stop the car
+        if actions.just_pressed(&CarActions::ToggleOn) {
+            engine.toggle_on();
+        }
 
-        engine.throttle = actions.clamped_value(&CarActions::Throttle);
-        engine.rpm = (engine.initial * (engine.throttle * 3.0)) + engine.initial;
-        brakes.pressure = actions.clamped_value(&CarActions::Brake);
-
-        println!("{}", actions.clamped_value(&CarActions::Throttle));
-        println!("{}", actions.clamped_value(&CarActions::Brake));
-
+        // Transmission
         if actions.just_pressed(&CarActions::GearUp) {
-            transmission.gear_up();
+            transmission.gear_up()
         }
         if actions.just_pressed(&CarActions::GearDown) {
-            transmission.gear_down();
+            transmission.gear_down()
+        }
+
+        if actions.just_pressed(&CarActions::HandBrake) {
+            todo!()
         }
     }
 }
 
-pub(crate) fn handle_kb_car_actions(
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default, States)]
+pub enum CarPedalMode {
+    #[default]
+    Keyboard,
+    Controller
+}
+
+pub(crate) fn handle_gamepad_pedals(
+    actions: Query<&ActionState<CarActions>>,
+    mut car: Query<(&mut Engine, &mut Transmission, &mut Brakes), With<Car>>,
+    time: Res<Time>
+) {
+    if let Ok((mut engine, mut transmission, mut brakes)) = car.get_single_mut() {
+        let actions = actions.single();
+        let throttle = actions.clamped_value(&CarActions::Throttle);
+        let brake = actions.clamped_value(&CarActions::Brake);
+
+        engine.set_throttle(throttle);
+        engine.update_rpm(time.delta_secs());
+        brakes.set_pressure(brake);
+    }
+}
+
+pub(crate) fn handle_kb_pedals(
     actions: Query<&ActionState<CarActions>>,
     mut car: Query<(&Car, &mut Engine, &mut Transmission, &mut Brakes)>,
-    mut kb_actions: ResMut<CarActionsKeyboard>
+    mut kb_actions: ResMut<CarActionsKeyboard>,
+    time: Res<Time>
 ) {
     if let Ok((car, mut engine, mut transmission, mut brakes)) = car.get_single_mut() {
         let actions = actions.single();
@@ -85,8 +120,8 @@ pub(crate) fn handle_kb_car_actions(
         kb_actions.throttle = kb_actions.throttle.clamp(0.0, 1.0);
         kb_actions.brake = kb_actions.brake.clamp(0.0, 1.0);
 
-        engine.throttle = kb_actions.throttle;
-        engine.rpm = (engine.initial * (engine.throttle * 3.0)) + engine.initial;
-        brakes.pressure = kb_actions.brake;
+        engine.set_throttle(kb_actions.throttle);
+        engine.update_rpm(time.delta_secs());
+        brakes.set_pressure(kb_actions.brake);
     }
 }

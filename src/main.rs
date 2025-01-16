@@ -3,6 +3,7 @@ pub mod vehicle;
 pub mod player;
 pub mod world;
 pub mod menus;
+mod debug;
 
 use bevy::prelude::*;
 use bevy::render::RenderPlugin;
@@ -10,6 +11,7 @@ use bevy::render::settings::{Backends, RenderCreation, WgpuSettings};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use crate::vehicle::VehiclePlugin;
 use crate::core::CorePlugin;
+use crate::debug::DebugPlugin;
 use crate::menus::MenuPlugin;
 use crate::player::PlayerPlugin;
 use crate::world::WorldPlugin;
@@ -36,6 +38,7 @@ fn main() {
         .add_plugins(WorldInspectorPlugin::new())
         .add_plugins((
             CorePlugin,
+            DebugPlugin,
             MenuPlugin,
             WorldPlugin,
             PlayerPlugin,

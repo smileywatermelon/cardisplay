@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use mevy::ui;
-use crate::menus::helpers::{button, DespawnMenu};
+use crate::button;
 use crate::menus::mainmenu::MenuMarker;
 use super::states::{MainMenuState, SettingsMenuState};
 
@@ -9,43 +9,50 @@ pub(crate) fn spawn_settings(
     mut commands: Commands,
     menu: Query<Entity, With<MenuMarker>>
 ) {
+    println!("Spawning Settings");
     if let Ok(menu) = menu.get_single() {
+        println!("Got Menu");
         commands.entity(menu).with_children(|parent| {
-            parent.spawn(button("Back")).observe(|
-                trigger: Trigger<Pointer<Click>>,
+            parent.spawn(button!("Back")).observe(|
+                _: Trigger<Pointer<Click>>,
                 mut main_state: ResMut<NextState<MainMenuState>>,
-                mut despawn: EventWriter<DespawnMenu>
+                mut commands: Commands,
+                menu: Query<Entity, With<MenuMarker>>,
             | {
-                despawn.send(DespawnMenu(true));
+                commands.entity(menu.single()).despawn_descendants();
+
                 main_state.set(MainMenuState::Main);
             });
 
-            parent.spawn(button("Video")).observe(|
-                trigger: Trigger<Pointer<Click>>,
+            parent.spawn(button!("Video")).observe(|
+                _: Trigger<Pointer<Click>>,
                 mut settings: ResMut<NextState<SettingsMenuState>>,
-                mut despawn: EventWriter<DespawnMenu>
+                mut commands: Commands,
+                menu: Query<Entity, With<MenuMarker>>,
             | {
-                despawn.send(DespawnMenu(true));
+                commands.entity(menu.single()).despawn_descendants();
 
                 settings.set(SettingsMenuState::Video);
             });
 
-            parent.spawn(button("Audio")).observe(|
-                trigger: Trigger<Pointer<Click>>,
+            parent.spawn(button!("Audio")).observe(|
+                _: Trigger<Pointer<Click>>,
                 mut settings: ResMut<NextState<SettingsMenuState>>,
-                mut despawn: EventWriter<DespawnMenu>
+                mut commands: Commands,
+                menu: Query<Entity, With<MenuMarker>>,
             | {
-                despawn.send(DespawnMenu(true));
+                commands.entity(menu.single()).despawn_descendants();
 
                 settings.set(SettingsMenuState::Audio);
             });
 
-            parent.spawn(button("Controls")).observe(|
-                trigger: Trigger<Pointer<Click>>,
+            parent.spawn(button!("Controls")).observe(|
+                _: Trigger<Pointer<Click>>,
                 mut settings: ResMut<NextState<SettingsMenuState>>,
-                mut despawn: EventWriter<DespawnMenu>
+                mut commands: Commands,
+                menu: Query<Entity, With<MenuMarker>>,
             | {
-                despawn.send(DespawnMenu(true));
+                commands.entity(menu.single()).despawn_descendants();
 
                 settings.set(SettingsMenuState::Controls);
             });
@@ -58,13 +65,14 @@ pub(crate) fn spawn_video(
     menu: Query<Entity, With<MenuMarker>>,
 ) {
     commands.entity(menu.single()).with_children(|parent| {
-        parent.spawn(button("Back")).observe(|
-            trigger: Trigger<Pointer<Click>>,
+        parent.spawn(button!("Back")).observe(|
+            _: Trigger<Pointer<Click>>,
             mut settings: ResMut<NextState<SettingsMenuState>>,
-            mut despawn: EventWriter<DespawnMenu>
+            mut commands: Commands,
+            menu: Query<Entity, With<MenuMarker>>,
         | {
-            despawn.send(DespawnMenu(true));
-            settings.set(SettingsMenuState::Controls);
+            commands.entity(menu.single()).despawn_descendants();
+            settings.set(SettingsMenuState::Settings);
         });
     });
 }
@@ -74,13 +82,14 @@ pub(crate) fn spawn_audio(
     menu: Query<Entity, With<MenuMarker>>,
 ) {
     commands.entity(menu.single()).with_children(|parent| {
-        parent.spawn(button("Back")).observe(|
-            trigger: Trigger<Pointer<Click>>,
+        parent.spawn(button!("Back")).observe(|
+            _: Trigger<Pointer<Click>>,
             mut settings: ResMut<NextState<SettingsMenuState>>,
-            mut despawn: EventWriter<DespawnMenu>
+            mut commands: Commands,
+            menu: Query<Entity, With<MenuMarker>>,
         | {
-            despawn.send(DespawnMenu(true));
-            settings.set(SettingsMenuState::Controls);
+            commands.entity(menu.single()).despawn_descendants();
+            settings.set(SettingsMenuState::Settings);
         });
     });
 }
@@ -90,13 +99,17 @@ pub(crate) fn spawn_controls(
     menu: Query<Entity, With<MenuMarker>>,
 ) {
     commands.entity(menu.single()).with_children(|parent| {
-        parent.spawn(button("Back")).observe(|
-            trigger: Trigger<Pointer<Click>>,
+        parent.spawn(button!("Back")).observe(|
+            _: Trigger<Pointer<Click>>,
             mut settings: ResMut<NextState<SettingsMenuState>>,
-            mut despawn: EventWriter<DespawnMenu>
+            mut commands: Commands,
+            menu: Query<Entity, With<MenuMarker>>,
         | {
-            despawn.send(DespawnMenu(true));
-            settings.set(SettingsMenuState::Controls);
+            commands.entity(menu.single()).despawn_descendants();
+            settings.set(SettingsMenuState::Settings);
         });
+        parent.spawn(button!("Controller", Color::BLACK, Color::WHITE));
+        parent.spawn(Text::new("Player Controls"));
+        parent.spawn(Text::new("Car Controls"));
     });
 }

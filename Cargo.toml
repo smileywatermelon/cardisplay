@@ -12,6 +12,8 @@ opt-level = 3
 [dependencies]
 avian3d = "0.2.0"
 bevy-inspector-egui = "0.28.1"
+rand_core = "0.6"
+bevy_rand = { version = "0.9.0", features = ["rand_chacha", "wyrand"]}
 leafwing-input-manager = "0.16.0"
 mevy = "0.1.2"
 

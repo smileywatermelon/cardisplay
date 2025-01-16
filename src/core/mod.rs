@@ -4,6 +4,8 @@ pub mod helpers;
 pub mod states;
 
 use bevy::prelude::*;
+use bevy_rand::prelude::*;
+
 use crate::core::camera::spawn_camera;
 use crate::core::physics::GamePhysicsPlugin;
 use crate::core::states::{update_current_state, spawn_current_state, GameState};
@@ -15,6 +17,7 @@ impl Plugin for CorePlugin {
         app.insert_state(GameState::default())
             .add_plugins((
                 GamePhysicsPlugin,
+                EntropyPlugin::<WyRand>::default()
             ))
             .add_systems(Startup, (
                 spawn_camera,

@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use mevy::ui;
+use crate::button;
 use crate::core::states::GameState;
-use crate::menus::helpers::{button, DespawnMenu};
-use crate::menus::states::{MainMenuState};
+use crate::menus::states::MainMenuState;
 
 /// Stores the Node that will contain all the ui
 #[derive(Component)]
@@ -16,10 +16,17 @@ pub(crate) fn spawn_menu(mut commands: Commands) {
         align_items: center;
         justify_content: center;
         background: #242729;
-    )), MenuMarker, Name::new("Menu"))).with_children(|parent| {
+    )), MenuMarker, Name::new("Menu")));
+}
+
+pub(crate) fn spawn_main_menu(
+    mut commands: Commands,
+    menu: Query<Entity, With<MenuMarker>>
+) {
+    commands.entity(menu.single()).with_children(|parent| {
         // Play Button
-        parent.spawn(button("Play")).observe(|
-            trigger: Trigger<Pointer<Click>>,
+        parent.spawn(button!("Play")).observe(|
+            _: Trigger<Pointer<Click>>,
             mut commands: Commands,
             menu: Query<Entity, With<MenuMarker>>,
             mut game_state: ResMut<NextState<GameState>>,
@@ -30,19 +37,20 @@ pub(crate) fn spawn_menu(mut commands: Commands) {
         });
 
         // Settings Button
-        parent.spawn(button("Settings")).observe(|
-            trigger: Trigger<Pointer<Click>>,
+        parent.spawn(button!("Settings")).observe(|
+            _: Trigger<Pointer<Click>>,
             mut main_state: ResMut<NextState<MainMenuState>>,
-            mut despawn: EventWriter<DespawnMenu>
+            mut commands: Commands,
+            menu: Query<Entity, With<MenuMarker>>,
         | {
-            despawn.send(DespawnMenu(true));
+            commands.entity(menu.single()).despawn_descendants();
 
             main_state.set(MainMenuState::Settings);
         });
 
             // Exit Button
-        parent.spawn(button("Exit")).observe(|
-            trigger: Trigger<Pointer<Click>>,
+        parent.spawn(button!("Exit")).observe(|
+            _: Trigger<Pointer<Click>>,
             mut exit: EventWriter<AppExit>
         | {
             exit.send(AppExit::Success);

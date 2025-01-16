@@ -36,7 +36,7 @@ impl Default for Wheel {
 
 #[derive(Component)]
 pub struct Brakes {
-    pub pressure: f32,
+    pressure: f32,
     power: f32
 }
 
@@ -46,6 +46,14 @@ impl Brakes {
             power,
             ..default()
         }
+    }
+
+    pub fn set_pressure(&mut self, pressure: f32) {
+        self.pressure = pressure;
+    }
+
+    pub fn pressure(&self) -> f32 {
+        self.pressure
     }
 
     pub fn friction(&self) -> f32 {

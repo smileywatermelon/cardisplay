@@ -69,7 +69,7 @@ impl AudioConst {
 
     // Defined Audio Constants
 
-    pub const ENGINE_IDLE: Self = Self::new_loop("audio/engine/idle.ogg", 0);
+    pub const ENGINE_IDLE: Self = Self::new_loop_paused("audio/engine/idle.ogg", 0);
     pub const ENGINE_DRIVE_1: Self = Self::new_loop_paused("audio/engine/drive-1.ogg", 1);
     pub const ENGINE_DRIVE_2: Self = Self::new_loop_paused("audio/engine/drive-2.ogg", 2);
     pub const ENGINE_DRIVE_3: Self = Self::new_loop_paused("audio/engine/drive-3.ogg", 3);
