@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use crate::core::helpers::prelude::*;
 use crate::core::states::GameState;
+use crate::vehicle::controls::CarActions;
 use super::parts::prelude::*;
 
 #[derive(Component)]
@@ -33,6 +34,7 @@ pub(crate) fn spawn_car(
             ..default()
         })),
         Transform::from_xyz(10.0, 10.0, 15.0),
+        CarActions::new(),
         Name::new("Car")
     ));
 

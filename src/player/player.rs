@@ -10,11 +10,11 @@ use crate::player::controls::PlayerActions;
 pub struct Player;
 
 impl Player {
-    pub fn new() -> (Self, InputMap<PlayerActions>) {
+    pub fn new() -> (Self, InputManagerBundle<PlayerActions>) {
         let player = Self;
         (
             player,
-            PlayerActions::new(player),
+            PlayerActions::new(),
         )
     }
 }
@@ -28,7 +28,6 @@ pub enum PlayerSetup {
 
 pub(crate) fn spawn_players(
     mut commands: Commands,
-    gamepad: Query<(Entity, &Gamepad)>,
     mut game_state: ResMut<NextState<GameState>>,
 ) {
     commands.spawn((
@@ -36,6 +35,8 @@ pub(crate) fn spawn_players(
         PlayerControllerBundle::new(Collider::cylinder(1.0, 4.0)),
         Name::new("Player")
     ));
+
+    info!("Player Spawned");
 
     game_state.set(GameState::SpawnVehicles)
 }

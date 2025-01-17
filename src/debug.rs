@@ -1,8 +1,10 @@
 use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
+use leafwing_input_manager::prelude::ActionState;
 use mevy::{spawn, ui};
+use crate::core::states::GameState;
 use crate::vehicle::car::Car;
-use crate::vehicle::controls::CarActionsKeyboard;
+use crate::vehicle::controls::{CarActions, CarActionsKeyboard};
 use crate::vehicle::parts::parts::{Engine, Transmission};
 use crate::vehicle::parts::wheels::{Brakes, Wheels};
 
@@ -12,8 +14,10 @@ impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
         app.insert_state(DebugState::default())
             .add_systems(Startup, spawn_debug_menu)
-            .add_systems(Update, toggle_debug.run_if(input_just_pressed(KeyCode::Numpad0)))
-            .add_systems(Update, update_debug_menu.run_if(in_state(DebugState::Enabled)))
+            .add_systems(Update, (
+                toggle_debug.run_if(input_just_pressed(KeyCode::Escape)),
+                update_debug_menu.run_if(in_state(DebugState::Enabled))
+            ).run_if(in_state(GameState::Running)))
             ;
     }
 }
@@ -77,7 +81,7 @@ fn spawn_debug_menu(mut commands: Commands) {
         display: flex;
         flex_direction: column;
         size: 20%, 50%;
-    )), DebugMenu, Name::new("DebugMenu"))).with_children(|parent| {
+    )), DebugMenu, Name::new("DebugMenu"), Visibility::Hidden)).with_children(|parent| {
         parent.spawn(Text::new("Debug Menu"));
 
         parent.spawn(Text::new("Engine"));
@@ -85,23 +89,30 @@ fn spawn_debug_menu(mut commands: Commands) {
         parent.spawn(DebugMarker::new("GP Throttle", 1));
         parent.spawn(DebugMarker::new("KB Throttle", 2));
         parent.spawn(DebugMarker::new("RPM", 3));
+        parent.spawn(DebugMarker::new("On/Off", 4));
         parent.spawn(Text::new("Transmission"));
-        parent.spawn(DebugMarker::new("Gear", 4));
-        parent.spawn(DebugMarker::new("Ratio", 5));
+        parent.spawn(DebugMarker::new("Gear", 5));
+        parent.spawn(DebugMarker::new("Ratio", 6));
         parent.spawn(Text::new("Wheels"));
-        parent.spawn(DebugMarker::new("Brakes", 6));
-        parent.spawn(DebugMarker::new("GP Brakes", 7));
-        parent.spawn(DebugMarker::new("KB Brakes", 8));
-        parent.spawn(DebugMarker::new("RPM", 9));
+        parent.spawn(DebugMarker::new("Brakes", 7));
+        parent.spawn(DebugMarker::new("GP Brakes", 8));
+        parent.spawn(DebugMarker::new("KB Brakes", 9));
+        parent.spawn(DebugMarker::new("RPM", 10));
+        parent.spawn(Text::new("Actions"));
+        parent.spawn(DebugMarker::new("GP Throttle", 11));
+        parent.spawn(DebugMarker::new("GP Brake", 12));
+        parent.spawn(DebugMarker::new("KB Throttle", 13));
+        parent.spawn(DebugMarker::new("KB Brake", 14));
     });
 }
 
 fn update_debug_menu(
-    car: Query<(&Engine, &Transmission, &Wheels, &Brakes), With<Car>>,
+    car: Query<(&Engine, &Transmission, &Wheels, &Brakes, &ActionState<CarActions>), With<Car>>,
+
     kb_actions: Res<CarActionsKeyboard>,
     mut debug: Query<(&mut Text, &DebugMarker)>
 ) {
-    if let Ok((engine, transmission, wheels, brakes)) = car.get_single() {
+    if let Ok((engine, transmission, wheels, brakes, actions)) = car.get_single() {
         for (mut text, debug) in debug.iter_mut() {
             match debug.id {
                 0 => {
@@ -117,22 +128,37 @@ fn update_debug_menu(
                     text.0 = debug.format_f32(engine.rpm())
                 },
                 4 => {
+                    text.0 = debug.format(engine.is_on())
+                }
+                5 => {
                     text.0 = debug.format(transmission.gear_string())
                 },
-                5 => {
+                6 => {
                     text.0 = debug.format(transmission.ratio())
                 },
-                6 => {
+                7 => {
                     text.0 = debug.format(brakes.pressure())
                 },
-                7 => {
+                8 => {
                     text.0 = debug.format_f32(0.0)
                 },
-                8 => {
+                9 => {
                     text.0 = debug.format_f32(kb_actions.brake)
                 },
-                9 => {
+                10 => {
                     text.0 = debug.format(wheels.top_left.rpm)
+                },
+                11 => {
+                    text.0 = debug.format(actions.clamped_value(&CarActions::Throttle))
+                },
+                12 => {
+                    text.0 = debug.format(actions.clamped_value(&CarActions::Brake))
+                },
+                13 => {
+                    text.0 = debug.format(actions.pressed(&CarActions::KThrottle))
+                },
+                14 => {
+                    text.0 = debug.format(actions.pressed(&CarActions::KBrake))
                 }
                 _ => ()
             }

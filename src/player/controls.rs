@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, PrimaryWindow};
 use leafwing_input_manager::prelude::*;
 use crate::player::player::{Player, PlayerSettings};
+use super::super::vehicle::car::CarState;
 
 #[derive(Actionlike, Clone, Copy, PartialEq, Eq, Hash, Debug, Reflect)]
 pub enum PlayerActions {
@@ -18,7 +19,7 @@ pub enum PlayerActions {
 }
 
 impl PlayerActions {
-    pub fn new(player: Player) -> InputMap<Self> {
+    pub fn new() -> InputManagerBundle<Self> {
         let input_map = InputMap::default()
             // KBM
             .with_dual_axis(PlayerActions::Look, MouseMove::default())
@@ -33,16 +34,8 @@ impl PlayerActions {
             .with(PlayerActions::EnterCar, GamepadButton::North)
             ;
 
-        input_map
+        InputManagerBundle::with_map(input_map)
     }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Default, States)]
-pub enum PlayerSetup {
-    #[default]
-    None,
-    Singleplayer,
-    Multiplayer
 }
 
 /// How much to divide the player sensitivity by
@@ -53,6 +46,7 @@ pub(crate) fn handle_player_actions(
     primary_window: Query<&Window, With<PrimaryWindow>>,
     mut player: Query<(&ActionState<PlayerActions>, &mut LinearVelocity), With<Player>>,
     settings: Query<&PlayerSettings, With<Player>>,
+    mut car_state: ResMut<NextState<CarState>>,
     time: Res<Time>
 ) {
     for window in primary_window.iter() {
@@ -93,6 +87,10 @@ pub(crate) fn handle_player_actions(
 
 
             // -- Other
+            if actions.just_pressed(&PlayerActions::EnterCar) {
+                car_state.set(CarState::InCar);
+                info!("Entered Car");
+            }
 
             // -- End Other
         }

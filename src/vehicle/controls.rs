@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
-use crate::vehicle::car::Car;
+use crate::vehicle::car::{Car, CarState};
 use crate::vehicle::parts::prelude::*;
 
 #[derive(Actionlike, Clone, Copy, PartialEq, Eq, Hash, Debug, Reflect)]
@@ -23,6 +23,29 @@ pub enum CarActions {
     GearDown,
     /// `Start` | `Tab` by default, ≡ (Xbox)
     ToggleOn,
+    /// `North` | `F` by default, Y (Xbox)
+    ExitCar
+}
+
+impl CarActions {
+    pub fn new() -> InputManagerBundle<Self> {
+        let input_map = InputMap::default()
+            .with_axis(CarActions::Throttle, GamepadAxis::RightZ)
+            .with_axis(CarActions::Brake, GamepadAxis::LeftZ)
+            .with(CarActions::HandBrake, GamepadButton::West)
+            .with(CarActions::GearUp, GamepadButton::RightTrigger)
+            .with(CarActions::GearDown, GamepadButton::LeftTrigger)
+            .with(CarActions::ToggleOn, GamepadButton::Start)
+
+            .with(CarActions::KThrottle, KeyCode::KeyW)
+            .with(CarActions::KBrake, KeyCode::KeyS)
+            .with(CarActions::HandBrake, KeyCode::Space)
+            .with(CarActions::GearUp, KeyCode::KeyE)
+            .with(CarActions::GearDown, KeyCode::KeyQ)
+            .with(CarActions::ToggleOn, KeyCode::KeyF);
+
+        InputManagerBundle::with_map(input_map)
+    }
 }
 
 #[derive(Resource, Default)]
@@ -31,25 +54,10 @@ pub struct CarActionsKeyboard {
     pub brake: f32,
 }
 
-pub(crate) fn spawn_car_actions(mut commands: Commands) {
-    let input_map = InputMap::default()
-        .with_axis(CarActions::Throttle, GamepadAxis::RightZ)
-        .with_axis(CarActions::Brake, GamepadAxis::LeftZ)
-        .with(CarActions::GearUp, GamepadButton::DPadUp)
-        .with(CarActions::GearDown, GamepadButton::DPadDown)
-        .with(CarActions::ToggleOn, GamepadButton::Start)
-        
-        .with(CarActions::KThrottle, KeyCode::KeyW)
-        .with(CarActions::KBrake, KeyCode::KeyS)
-        .with(CarActions::GearUp, KeyCode::KeyE)
-        .with(CarActions::GearDown, KeyCode::KeyQ);
-
-    commands.spawn((InputManagerBundle::with_map(input_map), Name::new("CarActions")));
-}
-
 pub(crate) fn handle_car_actions(
     actions: Query<&ActionState<CarActions>>,
     mut car: Query<(&mut Engine, &mut Transmission, &mut Brakes), With<Car>>,
+    mut car_state: ResMut<NextState<CarState>>
 ) {
     if let Ok((mut engine, mut transmission, mut brakes)) = car.get_single_mut() {
         let actions = actions.single();
@@ -69,6 +77,11 @@ pub(crate) fn handle_car_actions(
 
         if actions.just_pressed(&CarActions::HandBrake) {
             todo!()
+        }
+
+        if actions.just_pressed(&CarActions::ExitCar) {
+            car_state.set(CarState::OutCar);
+            info!("Exited Car")
         }
     }
 }
@@ -98,21 +111,23 @@ pub(crate) fn handle_gamepad_pedals(
 
 pub(crate) fn handle_kb_pedals(
     actions: Query<&ActionState<CarActions>>,
-    mut car: Query<(&Car, &mut Engine, &mut Transmission, &mut Brakes)>,
+    mut car: Query<(&mut Engine, &mut Transmission, &mut Brakes), With<Car>>,
     mut kb_actions: ResMut<CarActionsKeyboard>,
     time: Res<Time>
 ) {
-    if let Ok((car, mut engine, mut transmission, mut brakes)) = car.get_single_mut() {
+    if let Ok((mut engine, mut transmission, mut brakes)) = car.get_single_mut() {
         let actions = actions.single();
 
         if actions.pressed(&CarActions::KThrottle) {
             kb_actions.throttle += 0.01;
+            info!("KB Throttle: {}", kb_actions.throttle)
         } else {
             kb_actions.throttle -= 0.01;
         }
 
         if actions.pressed(&CarActions::KBrake) {
             kb_actions.brake += 0.01;
+            info!("KB Brake: {}", kb_actions.brake)
         } else {
             kb_actions.brake -= 0.01;
         }
