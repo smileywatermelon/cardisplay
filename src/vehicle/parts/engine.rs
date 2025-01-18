@@ -1,7 +1,8 @@
 use bevy::prelude::*;
+use serde::Deserialize;
 
 #[derive(Component)]
-#[require(EngineSetup)] 
+#[require(EngineSetup)]
 pub struct Engine {
     // Engine RPMS
     /// Current Engine RPM
@@ -18,11 +19,13 @@ pub struct Engine {
     /// Deceleration
     decel_rate: f32,
     /// Is the Engine on?
-    on: bool
+    on: bool,
+    /// Engine Sound ID
+    sound_id: usize
 }
 
 impl Engine {
-    pub fn new(initial: f32, redline: f32, accel_rate: f32, decel_rate: f32) -> Self {
+    pub fn new(initial: f32, redline: f32, accel_rate: f32, decel_rate: f32, sound_id: usize) -> Self {
         Self {
             rpm: initial.clone(),
             throttle: 0.0,
@@ -30,7 +33,8 @@ impl Engine {
             redline,
             accel_rate,
             decel_rate,
-            on: false
+            on: false,
+            sound_id
         }
     }
 
@@ -72,6 +76,7 @@ impl Engine {
     pub fn accel_rate(&self) -> f32 { self.accel_rate }
     pub fn decel_rate(&self) -> f32 { self.decel_rate }
     pub fn is_on(&self) -> bool { self.on }
+    pub fn sound_id(&self) -> usize { self.sound_id }
 }
 
 impl Default for Engine {
@@ -87,7 +92,8 @@ impl Default for Engine {
             accel_rate: 6000.0,
             decel_rate: 4000.0,
 
-            on: false
+            on: false,
+            sound_id: 0
         }
     }
 }
@@ -105,92 +111,51 @@ pub enum EngineSetup {
     V8
 }
 
-#[derive(Component)]
-pub struct Transmission {
-    ratios: Vec<f32>,
-    reverse: f32,
-    final_drive: f32,
-    /// Describes the selected gear
-    ///
-    /// 1 - N are normal gears
-    ///
-    /// 0 is neutral
-    ///
-    /// -1 is Reverse
-    selected: i32
+pub struct EngineHandle {
+    pub id: usize,
+    pub idle: Handle<AudioSource>,
+    pub low: Handle<AudioSource>,
+    pub mid: Handle<AudioSource>,
+    pub high: Handle<AudioSource>,
 }
 
-impl Transmission {
-    pub fn gear(&self) -> i32 {
-        self.selected
-    }
+impl EngineHandle {
+    pub fn from_id(engine_id: usize, assets: &Res<AssetServer>) -> Self {
+        let path = "audio/engine/engine_";
 
-    pub fn gear_string(&self) -> String {
-        match self.gear() {
-            -1 => {
-                "R".to_string()
-            },
-            0 => {
-                "N".to_string()
-            },
-            g => {
-                g.to_string()
-            }
-        }
-    }
-
-    pub fn ratio(&self) -> f32 {
-        match self.selected {
-            -1 => -self.reverse,
-            0 => 0.0,
-            _ => self.ratios[self.selected as usize - 1]
-        }
-    }
-
-    pub fn ratios(&self) -> Vec<f32> {
-        self.ratios.clone()
-    }
-
-    pub fn final_drive(&self) -> f32 {
-        self.final_drive
-    }
-
-    pub fn gear_up(&mut self) {
-        if !(self.selected + 1 > self.ratios.len() as i32) {
-            self.selected += 1;
-        }
-    }
-
-    pub fn gear_down(&mut self) {
-        if !(self.selected == -1) {
-            self.selected -= 1
-        }
-    }
-
-    pub fn turn_off(&mut self) {
-        self.selected = 0;
-    }
-
-    /// Returns `-1.0` if true, `1.0` if false
-    ///
-    /// Used for `Wheels` calculation
-    pub fn is_reverse(&self) -> f32 {
-        if self.selected == -1 {
-            return -1.0;
-        }
-        1.0
-    }
-}
-
-impl Default for Transmission {
-    /// Honda Civic EK9 Gear Ratios
-    fn default() -> Self {
         Self {
-            ratios: vec![3.230, 2.105, 1.458, 1.107, 0.848],
-            reverse: 3.000,
-            final_drive: 4.400,
-            // Neutral
-            selected: 0
+            id: engine_id,
+            idle: assets.load(format!("{}{}/idle.ogg", path, engine_id)),
+            low:  assets.load(format!("{}{}/low.ogg", path, engine_id)),
+            mid:  assets.load(format!("{}{}/mid.ogg", path, engine_id)),
+            high: assets.load(format!("{}{}/high.ogg", path, engine_id)),
         }
     }
+}
+
+#[derive(Resource)]
+pub struct EngineSounds {
+    pub sounds: Vec<EngineHandle>
+}
+
+impl EngineSounds {
+    pub fn get_handle(&self, id: usize) -> Option<&EngineHandle> {
+        self.sounds.get(id)
+    }
+    pub fn get_mut_handle(&mut self, id: usize) -> Option<&mut EngineHandle> {
+        self.sounds.get_mut(id)
+    }
+}
+
+#[derive(Deserialize, Asset, TypePath)]
+pub struct EngineFile {
+    pub engine_ids: Vec<usize>
+}
+
+pub(crate) fn spawn_engine_sounds(
+    mut commands: Commands,
+    assets: Res<AssetServer>
+) {
+    let handle = assets.load("audio/engine/engines.json");
+
 }

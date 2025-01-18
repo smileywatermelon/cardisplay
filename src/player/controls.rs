@@ -3,8 +3,11 @@ use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, PrimaryWindow};
 use leafwing_input_manager::prelude::*;
-use crate::player::player::{Player, PlayerSettings};
-use super::super::vehicle::car::CarState;
+use crate::core::helpers::prelude::set_grabmode;
+use crate::core::states::GameState;
+use crate::player::physics::{Grounded, JumpImpulse};
+use crate::player::player::{MainPlayer, Player, PlayerSettings};
+use crate::player::states::{ClientState, PlayerCarState};
 
 #[derive(Actionlike, Clone, Copy, PartialEq, Eq, Hash, Debug, Reflect)]
 pub enum PlayerActions {
@@ -13,7 +16,8 @@ pub enum PlayerActions {
     #[actionlike(DualAxis)]
     Move,
     Jump,
-    EnterCar,
+    ToggleCar,
+    TogglePause,
     // Debug
     DebugResetPlayer
 }
@@ -25,13 +29,15 @@ impl PlayerActions {
             .with_dual_axis(PlayerActions::Look, MouseMove::default())
             .with_dual_axis(PlayerActions::Move, VirtualDPad::wasd())
             .with(PlayerActions::Jump, KeyCode::Space)
-            .with(PlayerActions::EnterCar, KeyCode::KeyE)
+            .with(PlayerActions::ToggleCar, KeyCode::KeyE)
+            .with(PlayerActions::TogglePause, KeyCode::Escape)
             .with(PlayerActions::DebugResetPlayer, KeyCode::KeyR)
             // Gamepad
             .with_dual_axis(PlayerActions::Look, GamepadStick::RIGHT.with_deadzone_symmetric(0.1))
             .with_dual_axis(PlayerActions::Move, GamepadStick::LEFT.with_deadzone_symmetric(0.1))
             .with(PlayerActions::Jump, GamepadButton::South)
-            .with(PlayerActions::EnterCar, GamepadButton::North)
+            .with(PlayerActions::ToggleCar, GamepadButton::North)
+            .with(PlayerActions::TogglePause, GamepadButton::Start)
             ;
 
         InputManagerBundle::with_map(input_map)
@@ -41,20 +47,16 @@ impl PlayerActions {
 /// How much to divide the player sensitivity by
 const SENSITIVITY_FACTOR: f32 = 10000.0;
 
-pub(crate) fn handle_player_actions(
+pub(crate) fn handle_player_look(
     mut camera: Query<&mut Transform, With<Camera>>,
     primary_window: Query<&Window, With<PrimaryWindow>>,
-    mut player: Query<(&ActionState<PlayerActions>, &mut LinearVelocity), With<Player>>,
-    settings: Query<&PlayerSettings, With<Player>>,
-    mut car_state: ResMut<NextState<CarState>>,
+    player: Query<(&ActionState<PlayerActions>, &PlayerSettings)>,
     time: Res<Time>
 ) {
     for window in primary_window.iter() {
-        let settings = settings.single();
-        let (actions, mut linear) = player.single_mut();
+        let (actions, settings) = player.single();
 
         if let Ok(mut camera) = camera.get_single_mut() {
-            // -- Looking
             let (mut yaw, mut pitch, _) = camera.rotation.to_euler(EulerRot::YXZ);
 
             let look_delta = actions.clamped_axis_pair(&PlayerActions::Look);
@@ -71,28 +73,99 @@ pub(crate) fn handle_player_actions(
             pitch = pitch.clamp(-1.54, 1.54);
 
             camera.rotation = Quat::from_axis_angle(Vec3::Y, yaw) * Quat::from_axis_angle(Vec3::X, pitch);
+        }
+    }
+}
 
-            // -- End Looking
+pub(crate) fn disable_look(
+    mut window: Query<&mut Window, With<PrimaryWindow>>
+) {
+    set_grabmode(&mut window.single_mut(), false);
+}
 
-            let forward = camera.forward();
-            let right = camera.right().normalize_or_zero();
+pub(crate) fn handle_player_move(
+    mut player: Query<(
+        &ActionState<PlayerActions>,
+        &PlayerSettings,
+        &mut LinearVelocity,
+        &JumpImpulse,
+        Has<Grounded>
+    ), With<MainPlayer>>,
+    camera: Query<&Transform, With<Camera>>,
+    time: Res<Time>
+) {
+    if let Ok((actions, settings, mut linear, jump, grounded)) = player.get_single_mut() {
+        let camera = camera.single();
+        let delta = time.delta_secs();
+        let movement = actions.clamped_axis_pair(&PlayerActions::Move);
 
-            linear.x += forward.x + right.x;
-            linear.z += forward.z + right.z;
+        let forward = camera.forward() * movement.y * delta * settings.speed;
+        let mut right = camera.right() * movement.x * delta * settings.speed;
+        right = right.normalize_or_zero();
 
-            // -- Movement
+        linear.x += forward.x + right.x;
+        linear.z += forward.z + right.z;
 
-            // -- End Movement
+        if actions.just_pressed(&PlayerActions::Jump) {
+            if grounded {
+                linear.y = jump.0;
+            }
+        }
+    }
+}
 
+pub(crate) fn handle_player_actions(
+    mut player: Query<(&ActionState<PlayerActions>, &mut Transform, &mut LinearVelocity)>,
+    car_state: Res<State<PlayerCarState>>,
+    mut car_next_state: ResMut<NextState<PlayerCarState>>,
+) {
+    let (actions, mut transform, mut linear) = player.single_mut();
 
+    if actions.just_pressed(&PlayerActions::DebugResetPlayer) && car_state.get().clone() != PlayerCarState::InCar {
+        transform.translation.x = 0.0;
+        transform.translation.y = 0.0;
+        transform.translation.z = 0.0;
 
-            // -- Other
-            if actions.just_pressed(&PlayerActions::EnterCar) {
-                car_state.set(CarState::InCar);
+        linear.0 = Vec3::ZERO;
+
+        info!("Reset Player")
+    }
+
+    if actions.just_pressed(&PlayerActions::ToggleCar) {
+        info!("Toggled Car");
+        match car_state.get() {
+            PlayerCarState::InCar => {
+                car_next_state.set(PlayerCarState::OutCar);
+                info!("Exited Car");
+            },
+            PlayerCarState::OutCar => {
+                car_next_state.set(PlayerCarState::InCar);
                 info!("Entered Car");
             }
+        }
+    }
+}
 
-            // -- End Other
+pub(crate) fn toggle_pause(
+    player: Query<&ActionState<PlayerActions>>,
+    client_state: Res<State<ClientState>>,
+    mut client_next_state: ResMut<NextState<ClientState>>,
+    mut window: Query<&mut Window, With<PrimaryWindow>>,
+) {
+    let actions = player.single();
+
+    if actions.just_pressed(&PlayerActions::TogglePause) {
+        match client_state.get() {
+            ClientState::Paused => {
+                client_next_state.set(ClientState::Running);
+                set_grabmode(&mut window.single_mut(), true);
+                info!("Client Running");
+            },
+            ClientState::Running => {
+                client_next_state.set(ClientState::Paused);
+                set_grabmode(&mut window.single_mut(), false);
+                info!("Client Paused");
+            }
         }
     }
 }

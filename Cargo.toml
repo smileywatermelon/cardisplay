@@ -16,6 +16,8 @@ rand_core = "0.6"
 bevy_rand = { version = "0.9.0", features = ["rand_chacha", "wyrand"]}
 leafwing-input-manager = "0.16.0"
 mevy = "0.1.2"
+bevy_common_assets = { version = "0.12.0", features = ["json"] }
+serde = { version = "1.0.217", features = ["derive"] }
 
 [dependencies.bevy]
 version = "0.15.1"

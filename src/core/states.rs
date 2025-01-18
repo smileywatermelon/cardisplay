@@ -8,6 +8,8 @@ pub enum GameState {
     Loading,
     /// MainMenu
     MainMenu,
+    /// Initialize server
+    SpawnServer,
     /// Spawn the world, then go to Players
     SpawnWorld,
     /// Spawn the players, then go to vehicles
@@ -16,9 +18,6 @@ pub enum GameState {
     SpawnVehicles,
     /// Stay here indefinitely until game is paused, then go to Paused
     Running,
-    /// Stay here indefinitely until game is exited, then go to MainMenu
-    /// Or until game is un-paused, then go to Running
-    Paused
 }
 
 #[derive(Component)]
@@ -40,11 +39,11 @@ pub(crate) fn update_current_state(
     let game = match game.get() {
         GameState::Loading => "Loading",
         GameState::MainMenu => "MainMenu",
+        GameState::SpawnServer => "SpawnServer",
         GameState::SpawnWorld => "SpawnWorld",
         GameState::SpawnPlayers => "SpawnPlayers",
         GameState::SpawnVehicles => "SpawnVehicles",
         GameState::Running => "Running",
-        GameState::Paused => "Paused",
     };
     if let Ok(mut current_state) = current_state.get_single_mut() {
         current_state.0 = game.to_string();

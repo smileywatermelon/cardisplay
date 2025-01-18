@@ -1,19 +1,21 @@
 use bevy::prelude::*;
 use mevy::ui;
 use crate::button;
+use crate::core::handles::GlobalFont;
 use crate::menus::mainmenu::MenuMarker;
 use super::states::{MainMenuState, SettingsMenuState};
 
 // This observing code could probably be put in a macro
 pub(crate) fn spawn_settings(
     mut commands: Commands,
+    font: Res<GlobalFont>,
     menu: Query<Entity, With<MenuMarker>>
 ) {
     println!("Spawning Settings");
     if let Ok(menu) = menu.get_single() {
         println!("Got Menu");
         commands.entity(menu).with_children(|parent| {
-            parent.spawn(button!("Back")).observe(|
+            button!(parent, "Back", font.handle()).observe(|
                 _: Trigger<Pointer<Click>>,
                 mut main_state: ResMut<NextState<MainMenuState>>,
                 mut commands: Commands,
@@ -24,7 +26,7 @@ pub(crate) fn spawn_settings(
                 main_state.set(MainMenuState::Main);
             });
 
-            parent.spawn(button!("Video")).observe(|
+            button!(parent, "Video", font.handle()).observe(|
                 _: Trigger<Pointer<Click>>,
                 mut settings: ResMut<NextState<SettingsMenuState>>,
                 mut commands: Commands,
@@ -35,7 +37,7 @@ pub(crate) fn spawn_settings(
                 settings.set(SettingsMenuState::Video);
             });
 
-            parent.spawn(button!("Audio")).observe(|
+            button!(parent, "Audio", font.handle()).observe(|
                 _: Trigger<Pointer<Click>>,
                 mut settings: ResMut<NextState<SettingsMenuState>>,
                 mut commands: Commands,
@@ -46,7 +48,7 @@ pub(crate) fn spawn_settings(
                 settings.set(SettingsMenuState::Audio);
             });
 
-            parent.spawn(button!("Controls")).observe(|
+            button!(parent, "Controls", font.handle()).observe(|
                 _: Trigger<Pointer<Click>>,
                 mut settings: ResMut<NextState<SettingsMenuState>>,
                 mut commands: Commands,
@@ -62,10 +64,11 @@ pub(crate) fn spawn_settings(
 
 pub(crate) fn spawn_video(
     mut commands: Commands,
+    font: Res<GlobalFont>,
     menu: Query<Entity, With<MenuMarker>>,
 ) {
     commands.entity(menu.single()).with_children(|parent| {
-        parent.spawn(button!("Back")).observe(|
+        button!(parent, "Back", font.handle()).observe(|
             _: Trigger<Pointer<Click>>,
             mut settings: ResMut<NextState<SettingsMenuState>>,
             mut commands: Commands,
@@ -79,10 +82,11 @@ pub(crate) fn spawn_video(
 
 pub(crate) fn spawn_audio(
     mut commands: Commands,
+    font: Res<GlobalFont>,
     menu: Query<Entity, With<MenuMarker>>,
 ) {
     commands.entity(menu.single()).with_children(|parent| {
-        parent.spawn(button!("Back")).observe(|
+        button!(parent, "Back", font.handle()).observe(|
             _: Trigger<Pointer<Click>>,
             mut settings: ResMut<NextState<SettingsMenuState>>,
             mut commands: Commands,
@@ -96,10 +100,11 @@ pub(crate) fn spawn_audio(
 
 pub(crate) fn spawn_controls(
     mut commands: Commands,
+    font: Res<GlobalFont>,
     menu: Query<Entity, With<MenuMarker>>,
 ) {
     commands.entity(menu.single()).with_children(|parent| {
-        parent.spawn(button!("Back")).observe(|
+        button!(parent, "Back", font.handle()).observe(|
             _: Trigger<Pointer<Click>>,
             mut settings: ResMut<NextState<SettingsMenuState>>,
             mut commands: Commands,
@@ -108,7 +113,6 @@ pub(crate) fn spawn_controls(
             commands.entity(menu.single()).despawn_descendants();
             settings.set(SettingsMenuState::Settings);
         });
-        parent.spawn(button!("Controller", Color::BLACK, Color::WHITE));
         parent.spawn(Text::new("Player Controls"));
         parent.spawn(Text::new("Car Controls"));
     });
