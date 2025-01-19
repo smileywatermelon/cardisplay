@@ -1,19 +1,15 @@
 use bevy::prelude::*;
-use mevy::ui;
 use crate::button;
-use crate::core::handles::GlobalFont;
-use crate::menus::mainmenu::MenuMarker;
-use super::states::{MainMenuState, SettingsMenuState};
+use crate::core::assets::global::GlobalFont;
+use crate::menus::helpers::MenuMarker;
+use crate::menus::states::{MainMenuState, SettingsMenuState};
 
-// This observing code could probably be put in a macro
-pub(crate) fn spawn_settings(
+pub fn spawn_settings(
     mut commands: Commands,
     font: Res<GlobalFont>,
     menu: Query<Entity, With<MenuMarker>>
 ) {
-    println!("Spawning Settings");
     if let Ok(menu) = menu.get_single() {
-        println!("Got Menu");
         commands.entity(menu).with_children(|parent| {
             button!(parent, "Back", font.handle()).observe(|
                 _: Trigger<Pointer<Click>>,
@@ -62,7 +58,7 @@ pub(crate) fn spawn_settings(
     }
 }
 
-pub(crate) fn spawn_video(
+pub fn spawn_video(
     mut commands: Commands,
     font: Res<GlobalFont>,
     menu: Query<Entity, With<MenuMarker>>,
@@ -80,7 +76,7 @@ pub(crate) fn spawn_video(
     });
 }
 
-pub(crate) fn spawn_audio(
+pub fn spawn_audio(
     mut commands: Commands,
     font: Res<GlobalFont>,
     menu: Query<Entity, With<MenuMarker>>,
@@ -98,7 +94,7 @@ pub(crate) fn spawn_audio(
     });
 }
 
-pub(crate) fn spawn_controls(
+pub fn spawn_controls(
     mut commands: Commands,
     font: Res<GlobalFont>,
     menu: Query<Entity, With<MenuMarker>>,
@@ -113,7 +109,5 @@ pub(crate) fn spawn_controls(
             commands.entity(menu.single()).despawn_descendants();
             settings.set(SettingsMenuState::Settings);
         });
-        parent.spawn(Text::new("Player Controls"));
-        parent.spawn(Text::new("Car Controls"));
     });
 }

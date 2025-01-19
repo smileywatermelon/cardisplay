@@ -9,16 +9,28 @@ use super::parts::prelude::*;
 pub struct Car(pub usize);
 
 #[derive(Component)]
-pub struct CurrentCar;
+pub struct MainCar;
+
+#[derive(Bundle, Default)]
+pub struct CarBundle {
+    pub engine: Engine,
+    pub tranmission: Transmission,
+    pub drive_train: DriveTrain,
+    pub wheels: Wheels,
+    pub brakes: Brakes,
+}
+
+impl CarBundle {
+    pub fn main_car(self) -> (Self, MainCar) {
+        (self, MainCar)
+    }
+}
 
 pub(crate) fn spawn_car(
     mut commands: Commands,
     mut game_state: ResMut<NextState<GameState>>
 ) {
-    commands.spawn((
-        Car(0),
-        CurrentCar,
-        ));
+    commands.spawn(CarBundle::default().main_car());
 
     game_state.set(GameState::Running)
 }

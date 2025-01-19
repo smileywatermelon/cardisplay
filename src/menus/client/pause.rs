@@ -2,10 +2,10 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use mevy::ui;
 use crate::{button, text};
-use crate::core::handles::GlobalFont;
+use crate::core::assets::GlobalFont;
 use crate::core::helpers::prelude::set_grabmode;
 use crate::core::states::GameState;
-use crate::menus::mainmenu::MenuMarker;
+use crate::menus::setup::MenuMarker;
 use crate::player::states::ClientState;
 
 pub(crate) fn spawn_pause_menu(

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 use serde::Deserialize;
 
 #[derive(Component)]
@@ -109,53 +110,4 @@ pub enum EngineSetup {
     V6,
     /// V8 Engine
     V8
-}
-
-pub struct EngineHandle {
-    pub id: usize,
-    pub idle: Handle<AudioSource>,
-    pub low: Handle<AudioSource>,
-    pub mid: Handle<AudioSource>,
-    pub high: Handle<AudioSource>,
-}
-
-impl EngineHandle {
-    pub fn from_id(engine_id: usize, assets: &Res<AssetServer>) -> Self {
-        let path = "audio/engine/engine_";
-
-        Self {
-            id: engine_id,
-            idle: assets.load(format!("{}{}/idle.ogg", path, engine_id)),
-            low:  assets.load(format!("{}{}/low.ogg", path, engine_id)),
-            mid:  assets.load(format!("{}{}/mid.ogg", path, engine_id)),
-            high: assets.load(format!("{}{}/high.ogg", path, engine_id)),
-        }
-    }
-}
-
-#[derive(Resource)]
-pub struct EngineSounds {
-    pub sounds: Vec<EngineHandle>
-}
-
-impl EngineSounds {
-    pub fn get_handle(&self, id: usize) -> Option<&EngineHandle> {
-        self.sounds.get(id)
-    }
-    pub fn get_mut_handle(&mut self, id: usize) -> Option<&mut EngineHandle> {
-        self.sounds.get_mut(id)
-    }
-}
-
-#[derive(Deserialize, Asset, TypePath)]
-pub struct EngineFile {
-    pub engine_ids: Vec<usize>
-}
-
-pub(crate) fn spawn_engine_sounds(
-    mut commands: Commands,
-    assets: Res<AssetServer>
-) {
-    let handle = assets.load("audio/engine/engines.json");
-
 }

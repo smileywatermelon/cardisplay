@@ -9,7 +9,7 @@ impl GlobalFont {
     }
 }
 
-pub(crate) fn insert_font_handle(
+pub fn insert_font_handle(
     mut commands: Commands,
     assets: Res<AssetServer>,
 ) {

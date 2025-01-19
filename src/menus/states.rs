@@ -6,6 +6,7 @@ use crate::core::states::GameState;
 pub enum MainMenuState {
     #[default]
     Main,
+    Select,
     Settings,
 }
 
