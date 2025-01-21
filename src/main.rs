@@ -4,6 +4,7 @@ pub mod player;
 pub mod world;
 pub mod menus;
 mod debug;
+pub mod server;
 
 use bevy::prelude::*;
 use bevy::render::RenderPlugin;

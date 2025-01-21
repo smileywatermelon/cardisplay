@@ -1,46 +1,32 @@
 use bevy::prelude::*;
 
-#[macro_export]
-macro_rules! color_fn {
-    ($name:ident, $r:expr, $g:expr, $b:expr) => {
-        pub fn $name() -> Color {
-            Color::srgb_u8(r, g, b)
-        }
-    };
-    ($name:ident, $r:expr, $g:expr, $b:expr, $a:expr) => {
-        pub fn $name() -> Color {
-            Color::srgba_u8($r, $g, $b, $a)
-        }
-    }
-}
-
-/// `vmax` macro, for consts mostly
-#[macro_export]
-macro_rules! vmax {
-    ($name:ident, $value:expr) => {
-        pub fn $name() -> Val {
-            vmax($value)
-        }
-    };
-}
-
 /// `vmax` function
-pub fn vmax(value: f32) -> Val {
-    Val::VMax(value)
+pub fn vmax(value: f32) -> Val { Val::VMax(value) }
+pub fn vmin(value: f32) -> Val { Val::VMin(value) }
+pub fn vh(value: f32) -> Val { Val::Vh(value) }
+pub fn vw(value: f32) -> Val { Val::Vw(value) }
+
+pub fn color<S: ToString>(hex: S) -> Color { Color::Srgba(Srgba::hex(hex.to_string()).unwrap()) }
+
+pub const BACKGROUND: &str = "101014";
+
+pub const TEXT_COLOR: &str = "ebeded";
+pub const TEXT_SIZE: f32 = 40.0;
+
+pub const BUTTON_NONE: &str = "22222a";
+pub const BUTTON_NONE_BORDER: &str = "30303b";
+pub const BUTTON_HOVER: &str = "292933";
+pub const BUTTON_HOVER_BORDER: &str = "373744";
+pub const BUTTON_PRESS: &str = "30303b";
+pub const BUTTON_PRESS_BORDER: &str = "3e3e4c";
+
+pub const BUTTON_WIDTH: f32 = 20.0;
+pub const BUTTON_HEIGHT: f32 = 5.0;
+
+pub fn button_padding() -> UiRect {
+    UiRect::all(vmax(1.0)).with_top(vmax(1.5))
 }
 
-color_fn!(background, 16, 16, 20);
-
-color_fn!(text, 235, 237, 237);
-const TEXT_SIZE: f32 = 40.0;
-
-color_fn!(button_none, 34, 34, 42);
-color_fn!(button_hover, 41, 41, 51);
-color_fn!(button_press, 48, 48, 59);
-
-vmax!(button_width, 20.0);
-vmax!(button_height, 5.0);
-
-fn button_padding() -> UiRect {
-    UiRect::all(vmax(1.0)).with_top(vmax(1.5))
+pub fn border_radius() -> BorderRadius {
+    BorderRadius::all(vmax(1.0))
 }

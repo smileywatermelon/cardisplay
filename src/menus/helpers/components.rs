@@ -1,47 +1,13 @@
-use bevy::prelude::Component;
+use bevy::prelude::*;
+use std::ops::Range;
 
-#[macro_export]
-macro_rules! button {
-    ($commands:expr, $text:expr, $font:expr) => {
-        $commands.spawn((
-            Button,
-            Node {
-                display: Display::Flex,
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
-                width: BUTTON_,
-                height: Val::VMax(5.0),
-                padding: UiRect::all(Val::VMax(1.0)).with_top(Val::VMax(1.5)),
-                ..default()
-            },
-            BackgroundColor(Color::srgb_u8(20, 22, 23)),
-            BorderRadius::all(Val::Px(10.0)),
-            BorderColor(Color::srgb_u8(20, 20, 20)),
-            BoxShadow {
-                color: Color::BLACK.with_alpha(0.5),
-                x_offset: Val::Px(0.0),
-                y_offset: Val::Px(0.0),
-                spread_radius: Val::Px(5.0),
-                blur_radius: Val::Px(5.0),
-            }
-        )).with_children(|parent| {
-            parent.spawn((
-                Text::new($text.to_string()),
-                TextFont {
-                    font: $font,
-                    font_size: 40.0,
-                    ..default()
-                },
-                TextColor(Color::srgb_u8(235, 237, 237)),
-            ));
-        })
-    };
-}
+#[derive(Component)]
+pub struct MenuMarker;
 
 #[derive(Component)]
 pub struct CycleButton {
     strings: Vec<String>,
-    current: usize
+    current: usize,
 }
 
 impl CycleButton {
@@ -65,30 +31,122 @@ impl CycleButton {
     }
 }
 
-macro_rules! button_cycle {
-    ($commands:expr, $text:expr, $strings:expr, $font:expr) => {
-        $commands.spawn((
-            Button,
-            CycleButton::new($strings),
-            Node {
-                display: Display::Flex,
+pub trait Ease {
+    fn new(range: Range<f32>) -> Self;
+    fn add(&mut self, value: f32) -> f32;
+    fn sub(&mut self, value: f32) -> f32;
+}
 
+pub trait XYEase {
+    fn new(x_range: Range<f32>, y_range: Range<f32>) -> Self;
+    fn add(&mut self, value: f32) -> (f32, f32);
+    fn add_xy(&mut self, x: f32, y: f32) -> (f32, f32);
+    fn sub(&mut self, value: f32) -> (f32, f32);
+    fn sub_xy(&mut self, x: f32, y: f32) -> (f32, f32);
+}
+
+macro_rules! ease {
+    ($name:ident) => {
+        #[derive(Component)]
+        pub struct $name {
+            value: f32,
+            range: Range<f32>,
+            pub ease: bool
+        }
+
+        impl Ease for $name {
+            fn new(range: Range<f32>) -> Self {
+                Self {
+                    value: range.start, range,
+                    ease: false
+                }
             }
-        ))
-    }
+
+            fn add(&mut self, value: f32) -> f32 {
+                self.value += value;
+                self.value = self.value.min(self.range.end);
+
+                self.value
+            }
+
+            fn sub(&mut self, value: f32) -> f32 {
+                self.value -= value;
+                self.value = self.value.max(self.range.start);
+
+                self.value
+            }
+        }
+    };
 }
 
-#[macro_export]
-macro_rules! text {
-    ($commands:expr, $text:expr, $font:expr) => {
-        $commands.spawn((
-            Text::new($text.to_string()),
-            TextFont {
-                font: $font,
-                font_size: TEXT_SIZE,
-                ..default()
-            },
-            TextColor(text_color()),
-        ));
-    }
+macro_rules! xy_ease {
+    ($name:ident) => {
+        #[derive(Component)]
+        pub struct $name {
+            /// current x scale
+            x: f32,
+            /// min and max x scales
+            x_range: Range<f32>,
+            /// current y scale
+            y: f32,
+            /// min and max y scales
+            y_range: Range<f32>,
+            /// ease up or down, represented by true or false
+            pub ease: bool
+        }
+
+        impl XYEase for $name {
+            fn new(x_range: Range<f32>, y_range: Range<f32>) -> Self {
+                Self {
+                    x: x_range.start, x_range,
+                    y: y_range.start, y_range,
+                    ease: false
+                }
+            }
+
+            fn add(&mut self, value: f32) -> (f32, f32) {
+                self.x += value;
+                self.x = self.x.min(self.x_range.end);
+
+                self.y += value;
+                self.y = self.y.min(self.y_range.end);
+
+                (self.x, self.y)
+            }
+
+            fn add_xy(&mut self, x: f32, y: f32) -> (f32, f32) {
+                self.x += x;
+                self.x = self.x.min(self.x_range.end);
+
+                self.y += y;
+                self.y = self.y.min(self.y_range.end);
+
+                (self.x, self.y)
+            }
+
+            fn sub(&mut self, value: f32) -> (f32, f32) {
+                self.x -= value;
+                self.x = self.x.max(self.x_range.start);
+
+                self.y -= value;
+                self.y = self.y.max(self.y_range.start);
+
+                (self.x, self.y)
+            }
+
+            fn sub_xy(&mut self, x: f32, y: f32) -> (f32, f32) {
+                self.x -= x;
+                self.x = self.x.max(self.x_range.start);
+
+                self.y -= y;
+                self.y = self.y.max(self.y_range.start);
+
+                (self.x, self.y)
+            }
+        }
+    };
 }
+
+ease!(UiFadeEase);
+ease!(UiScaleEase);
+xy_ease!(UiPositionEase);

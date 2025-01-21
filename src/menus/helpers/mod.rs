@@ -1,9 +1,6 @@
-pub mod components;
+pub mod widgets;
 pub mod definitions;
 pub mod systems;
-
-use bevy::prelude::Component;
-
-#[derive(Component)]
-pub struct MenuMarker;
+pub mod layout;
+pub mod components;
 

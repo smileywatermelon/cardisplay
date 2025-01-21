@@ -1,8 +1,9 @@
 use bevy::prelude::*;
-use crate::button;
+use crate::{base_button, button, text};
 use crate::core::assets::global::GlobalFont;
-use crate::menus::helpers::MenuMarker;
 use crate::menus::states::{MainMenuState, SettingsMenuState};
+use crate::menus::helpers::definitions::{BUTTON_WIDTH, BUTTON_HEIGHT, button_padding, BUTTON_NONE_BORDER, TEXT_COLOR, TEXT_SIZE, border_radius, BUTTON_NONE, vmax, color};
+use crate::menus::helpers::components::{UiScaleEase, MenuMarker, Ease};
 
 pub fn spawn_settings(
     mut commands: Commands,
@@ -11,6 +12,7 @@ pub fn spawn_settings(
 ) {
     if let Ok(menu) = menu.get_single() {
         commands.entity(menu).with_children(|parent| {
+            text!(parent, "Settings", font.handle(), 100.0);
             button!(parent, "Back", font.handle()).observe(|
                 _: Trigger<Pointer<Click>>,
                 mut main_state: ResMut<NextState<MainMenuState>>,
@@ -64,6 +66,7 @@ pub fn spawn_video(
     menu: Query<Entity, With<MenuMarker>>,
 ) {
     commands.entity(menu.single()).with_children(|parent| {
+        text!(parent, "Video", font.handle(), 100.0);
         button!(parent, "Back", font.handle()).observe(|
             _: Trigger<Pointer<Click>>,
             mut settings: ResMut<NextState<SettingsMenuState>>,
@@ -82,6 +85,7 @@ pub fn spawn_audio(
     menu: Query<Entity, With<MenuMarker>>,
 ) {
     commands.entity(menu.single()).with_children(|parent| {
+        text!(parent, "Audio", font.handle(), 100.0);
         button!(parent, "Back", font.handle()).observe(|
             _: Trigger<Pointer<Click>>,
             mut settings: ResMut<NextState<SettingsMenuState>>,
@@ -100,6 +104,7 @@ pub fn spawn_controls(
     menu: Query<Entity, With<MenuMarker>>,
 ) {
     commands.entity(menu.single()).with_children(|parent| {
+        text!(parent, "Controls", font.handle(), 100.0);
         button!(parent, "Back", font.handle()).observe(|
             _: Trigger<Pointer<Click>>,
             mut settings: ResMut<NextState<SettingsMenuState>>,

@@ -15,16 +15,17 @@ pub struct CorePlugin;
 
 impl Plugin for CorePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_state(GameState::default())
+        app
+            .insert_state(GameState::default())
             .add_plugins((
                 GamePhysicsPlugin,
                 EntropyPlugin::<WyRand>::default(),
             ))
-            .add_systems(Startup, (
+            .add_systems(OnEnter(GameState::Loading), (
+                spawn_current_state,
                 spawn_camera,
                 insert_font_handle,
-                spawn_current_state,
-            ))
+            ).chain())
             .add_systems(Update, update_current_state);
     }
 }

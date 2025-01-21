@@ -6,8 +6,18 @@ use crate::core::states::GameState;
 pub enum MainMenuState {
     #[default]
     Main,
-    Select,
+    Singleplayer,
+    Multiplayer,
     Settings,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Default, SubStates)]
+#[source(MainMenuState = MainMenuState::Singleplayer)]
+pub enum SelectMenuState {
+    #[default]
+    Name,
+    Car,
+    Map
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default, SubStates)]

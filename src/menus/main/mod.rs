@@ -1,5 +1,6 @@
 pub mod main;
 pub mod settings;
-pub mod select;
+pub mod singleplayer;
+pub mod multiplayer;
 
 use bevy::prelude::*;
