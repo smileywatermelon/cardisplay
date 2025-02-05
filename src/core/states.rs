@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use crate::menus::states::{MainMenuState, SettingsMenuState};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Default, States)]
 pub enum GameState {
@@ -10,13 +9,7 @@ pub enum GameState {
     MainMenu,
     /// Initialize server
     SpawnServer,
-    /// Spawn the world, then go to Players
-    SpawnWorld,
-    /// Spawn the players, then go to vehicles
-    SpawnPlayers,
-    /// Spawn the vehicles, then go to Running
-    SpawnVehicles,
-    /// Stay here indefinitely until game is paused, then go to Paused
+    /// Game is running
     Running,
 }
 
@@ -28,6 +21,7 @@ pub(crate) fn spawn_current_state(
 ) {
     commands.spawn((
         Text::new("State: "),
+        Name::new("StateDebug"),
         CurrentStateMarker
     ));
 }
@@ -40,9 +34,6 @@ pub(crate) fn update_current_state(
         GameState::Loading => "Loading",
         GameState::MainMenu => "MainMenu",
         GameState::SpawnServer => "SpawnServer",
-        GameState::SpawnWorld => "SpawnWorld",
-        GameState::SpawnPlayers => "SpawnPlayers",
-        GameState::SpawnVehicles => "SpawnVehicles",
         GameState::Running => "Running",
     };
     if let Ok(mut current_state) = current_state.get_single_mut() {

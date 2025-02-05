@@ -15,6 +15,7 @@ use crate::core::CorePlugin;
 use crate::debug::DebugPlugin;
 use crate::menus::MenuPlugin;
 use crate::player::PlayerPlugin;
+use crate::server::ServerPlugin;
 use crate::world::WorldPlugin;
 
 fn main() {
@@ -41,6 +42,9 @@ fn main() {
             CorePlugin,
             DebugPlugin,
             MenuPlugin,
+
+            // Game
+            ServerPlugin,
             WorldPlugin,
             PlayerPlugin,
             VehiclePlugin

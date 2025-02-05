@@ -7,6 +7,7 @@ macro_rules! base_button {
     ($commands:expr, $text:expr, $font:expr, $width:expr, $height:expr) => {
         $commands.spawn((
             Button,
+            UiScaleEase::new(1.0..1.1),
             Node {
                 display: Display::Flex,
                 align_items: AlignItems::Center,

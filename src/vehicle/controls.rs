@@ -1,7 +1,5 @@
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
-use crate::vehicle::car::Car;
-use crate::vehicle::parts::prelude::*;
 
 #[derive(Actionlike, Clone, Copy, PartialEq, Eq, Hash, Debug, Reflect)]
 pub enum CarActions {

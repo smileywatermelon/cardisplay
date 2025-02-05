@@ -1,5 +1,24 @@
-car:
+game:
+    singleplayer
     simulate engine and transmission gear ratios converting power to wheels
     each wheel independent
     RWD FWD AWD
     engine audio
+
+cardisplay:
+    multiplayer
+    maps:
+        time attack
+
+
+traffic trainer:
+    training maps:
+        speed limit
+        stop signs
+        yield signs
+        crosswalk
+        changing lanes
+    maybe add a quiz section (doesn't fit game but might)
+
+
+    selectable vehicles (a maybe)

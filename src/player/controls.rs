@@ -1,12 +1,10 @@
 use avian3d::prelude::LinearVelocity;
-use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, PrimaryWindow};
 use leafwing_input_manager::prelude::*;
 use crate::core::helpers::prelude::set_grabmode;
-use crate::core::states::GameState;
 use crate::player::physics::{Grounded, JumpImpulse};
-use crate::player::player::{MainPlayer, Player, PlayerSettings};
+use crate::player::player::{MainPlayer, PlayerSettings};
 use crate::player::states::{ClientState, PlayerCarState};
 
 #[derive(Actionlike, Clone, Copy, PartialEq, Eq, Hash, Debug, Reflect)]
@@ -73,8 +71,15 @@ pub(crate) fn handle_player_look(
             pitch = pitch.clamp(-1.54, 1.54);
 
             camera.rotation = Quat::from_axis_angle(Vec3::Y, yaw) * Quat::from_axis_angle(Vec3::X, pitch);
+            info!("{:?}", camera.rotation);
         }
     }
+}
+
+pub(crate) fn enable_look(
+    mut window: Query<&mut Window, With<PrimaryWindow>>
+) {
+    set_grabmode(&mut window.single_mut(), true);
 }
 
 pub(crate) fn disable_look(
@@ -150,7 +155,6 @@ pub(crate) fn toggle_pause(
     player: Query<&ActionState<PlayerActions>>,
     client_state: Res<State<ClientState>>,
     mut client_next_state: ResMut<NextState<ClientState>>,
-    mut window: Query<&mut Window, With<PrimaryWindow>>,
 ) {
     let actions = player.single();
 
@@ -158,12 +162,10 @@ pub(crate) fn toggle_pause(
         match client_state.get() {
             ClientState::Paused => {
                 client_next_state.set(ClientState::Running);
-                set_grabmode(&mut window.single_mut(), true);
                 info!("Client Running");
             },
             ClientState::Running => {
                 client_next_state.set(ClientState::Paused);
-                set_grabmode(&mut window.single_mut(), false);
                 info!("Client Paused");
             }
         }
