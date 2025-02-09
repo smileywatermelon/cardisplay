@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{base_button, button, button_cycle, col, row, text};
+use crate::{base_button, ease_button, button, short_button, button_cycle, col, row, text};
 use crate::core::assets::global::GlobalFont;
 use crate::core::states::GameState;
 use crate::menus::helpers::definitions::{BUTTON_WIDTH, BUTTON_HEIGHT, button_padding, BUTTON_NONE_BORDER, TEXT_COLOR, TEXT_SIZE, border_radius, BUTTON_NONE, vmax, color};
@@ -32,10 +32,7 @@ pub fn spawn_singleplayer_menu(
                     text!(parent, "Stoplight", font.handle());
                 });
 
-                row!(parent).with_children(|parent| {
-                    button!(parent, "Car", font.handle());
-                    text!(parent, "Honda Civic Type R", font.handle());
-                });
+                button_cycle!(parent, vec!["Traffic Light", "Stop Sign"], font.handle());
 
                 button!(parent, "Back", font.handle()).observe(|
                     _: Trigger<Pointer<Click>>,

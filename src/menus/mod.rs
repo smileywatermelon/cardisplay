@@ -11,7 +11,7 @@ use crate::menus::helpers::systems::{ease_buttons, highlight_buttons};
 use crate::menus::main::main::spawn_main;
 use crate::menus::main::multiplayer::spawn_multiplayer_menu;
 use crate::menus::main::singleplayer::spawn_singleplayer_menu;
-use crate::menus::main::settings::{spawn_settings, spawn_video, spawn_audio, spawn_controls};
+use crate::menus::main::settings::{spawn_settings, spawn_audio, spawn_controls};
 use crate::menus::setup::spawn_menu;
 use crate::menus::states::{MainMenuState, SettingsMenuState};
 use crate::player::states::ClientState;
@@ -33,7 +33,6 @@ impl Plugin for MenuPlugin {
             .add_systems(OnEnter(MainMenuState::Multiplayer), spawn_multiplayer_menu)
             // MainMenu - Settings
             .add_systems(OnEnter(SettingsMenuState::Settings), spawn_settings)
-            .add_systems(OnEnter(SettingsMenuState::Video), spawn_video)
             .add_systems(OnEnter(SettingsMenuState::Audio), spawn_audio)
             .add_systems(OnEnter(SettingsMenuState::Controls), spawn_controls)
             // Client - Pause Menu

@@ -6,27 +6,22 @@ pub struct MenuMarker;
 
 #[derive(Component)]
 pub struct CycleButton {
-    strings: Vec<String>,
+    strings: Vec<&'static str>,
     current: usize,
 }
 
 impl CycleButton {
-    pub fn new(strings: Vec<String>) -> Self {
+    pub fn new(strings: Vec<&'static str>) -> Self {
         Self {
             strings,
             current: 0
         }
     }
-    pub fn get(&self) -> String {
-        self.strings[self.current].clone()
+    pub fn get(&self) -> &str {
+        self.strings[self.current]
     }
-    pub fn next(&mut self) -> String {
-        let length = self.strings.len() - 1;
-
-        self.current = match self.current {
-            _ if self.current == length => 0,
-            _ => self.current + 1
-        };
+    pub fn next(&mut self) -> &str {
+        self.current = (self.current + 1) % self.strings.len();
         self.get()
     }
 }

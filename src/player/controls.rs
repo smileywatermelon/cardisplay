@@ -1,4 +1,5 @@
 use avian3d::prelude::LinearVelocity;
+use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, PrimaryWindow};
 use leafwing_input_manager::prelude::*;
@@ -24,7 +25,6 @@ impl PlayerActions {
     pub fn new() -> InputManagerBundle<Self> {
         let input_map = InputMap::default()
             // KBM
-            .with_dual_axis(PlayerActions::Look, MouseMove::default())
             .with_dual_axis(PlayerActions::Move, VirtualDPad::wasd())
             .with(PlayerActions::Jump, KeyCode::Space)
             .with(PlayerActions::ToggleCar, KeyCode::KeyE)
@@ -48,30 +48,31 @@ const SENSITIVITY_FACTOR: f32 = 10000.0;
 pub(crate) fn handle_player_look(
     mut camera: Query<&mut Transform, With<Camera>>,
     primary_window: Query<&Window, With<PrimaryWindow>>,
-    player: Query<(&ActionState<PlayerActions>, &PlayerSettings)>,
+    mut mouse: EventReader<MouseMotion>,
+    player: Query<&PlayerSettings>,
     time: Res<Time>
 ) {
     for window in primary_window.iter() {
-        let (actions, settings) = player.single();
+        let settings = player.single();
 
         if let Ok(mut camera) = camera.get_single_mut() {
-            let (mut yaw, mut pitch, _) = camera.rotation.to_euler(EulerRot::YXZ);
+            for ev in mouse.read() {
+                let (mut yaw, mut pitch, _) = camera.rotation.to_euler(EulerRot::YXZ);
 
-            let look_delta = actions.clamped_axis_pair(&PlayerActions::Look);
-
-            match window.cursor_options.grab_mode {
-                CursorGrabMode::None => (),
-                _ => {
-                    let window_scale = window.height().min(window.width());
-                    pitch -= ((settings.sensitivity / SENSITIVITY_FACTOR) * look_delta.y * window_scale).to_radians() * time.delta_secs();
-                    yaw   -= ((settings.sensitivity / SENSITIVITY_FACTOR) * look_delta.x * window_scale).to_radians() * time.delta_secs();
+                match window.cursor_options.grab_mode {
+                    CursorGrabMode::None => (),
+                    _ => {
+                        let window_scale = window.height().min(window.width());
+                        pitch -= ((settings.sensitivity / SENSITIVITY_FACTOR) * ev.delta.y * window_scale).to_radians() * time.delta_secs();
+                        yaw -= ((settings.sensitivity / SENSITIVITY_FACTOR) * ev.delta.x * window_scale).to_radians() * time.delta_secs();
+                    }
                 }
+
+                pitch = pitch.clamp(-1.54, 1.54);
+
+                camera.rotation = Quat::from_axis_angle(Vec3::Y, yaw) * Quat::from_axis_angle(Vec3::X, pitch);
+                info!("{:?}", camera.rotation);
             }
-
-            pitch = pitch.clamp(-1.54, 1.54);
-
-            camera.rotation = Quat::from_axis_angle(Vec3::Y, yaw) * Quat::from_axis_angle(Vec3::X, pitch);
-            info!("{:?}", camera.rotation);
         }
     }
 }
@@ -96,11 +97,11 @@ pub(crate) fn handle_player_move(
         &JumpImpulse,
         Has<Grounded>
     ), With<MainPlayer>>,
-    camera: Query<&Transform, With<Camera>>,
+    mut camera: Query<&mut Transform, With<Camera>>,
     time: Res<Time>
 ) {
     if let Ok((actions, settings, mut linear, jump, grounded)) = player.get_single_mut() {
-        let camera = camera.single();
+        let mut camera = camera.single_mut();
         let delta = time.delta_secs();
         let movement = actions.clamped_axis_pair(&PlayerActions::Move);
 
@@ -116,6 +117,11 @@ pub(crate) fn handle_player_move(
                 linear.y = jump.0;
             }
         }
+
+        camera.translation.x = linear.x;
+        camera.translation.y = linear.y;
+        camera.translation.z = linear.z;
+
     }
 }
 

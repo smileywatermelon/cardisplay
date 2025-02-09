@@ -25,7 +25,6 @@ pub enum SelectMenuState {
 pub enum SettingsMenuState {
     #[default]
     Settings,
-    Video,
     Audio,
     Controls
 }

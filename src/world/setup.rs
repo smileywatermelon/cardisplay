@@ -15,10 +15,10 @@ pub(crate) fn spawn_singleplayer_world(
 ) {
     commands.spawn((
         RigidBody::Static,
-        Collider::cuboid(100.0, 100.0, 1.0),
-        Mesh3d(meshes.add(Cuboid::new(100.0, 100.0, 1.0))),
+        Collider::cuboid(100.0, 1.0, 100.0),
+        Mesh3d(meshes.add(Cuboid::new(100.0, 1.0, 100.0))),
         MeshMaterial3d(materials.add(Color::srgb_u8(252, 148, 3))),
-        Transform::from_xyz(0.0, -10.0, 0.0),
+        Transform::from_xyz(0.0, -5.0, 0.0),
         Name::new("Platform"),
         WorldComponent
     ));
@@ -28,6 +28,7 @@ pub(crate) fn spawn_singleplayer_world(
         Collider::cylinder(1.0, 5.0),
         Mesh3d(meshes.add(Cylinder::new(1.0, 5.0))),
         MeshMaterial3d(materials.add(Color::srgb_u8(232, 120, 56))),
+        Transform::from_xyz(-5.0, 0.0, 0.0),
         Name::new("Cylinder"),
         WorldComponent,
     ));

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use mevy::ui;
-use crate::{base_button, button, text};
+use crate::{base_button, ease_button, button, text};
 use crate::core::assets::global::GlobalFont;
 use crate::core::helpers::prelude::set_grabmode;
 use crate::core::states::GameState;
