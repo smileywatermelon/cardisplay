@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use std::ops::Range;
+use cardisplay_macros::Menu;
 
 #[derive(Component)]
 pub struct MenuMarker;
@@ -145,3 +146,6 @@ macro_rules! xy_ease {
 ease!(UiFadeEase);
 ease!(UiScaleEase);
 xy_ease!(UiPositionEase);
+
+#[derive(Menu)]
+pub struct MenuNode(pub Node);

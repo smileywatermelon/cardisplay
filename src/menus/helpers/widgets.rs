@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use crate::menus::helpers::components::{CycleButton, UiScaleEase};
 use super::definitions::{BUTTON_WIDTH, BUTTON_HEIGHT, button_padding, BUTTON_NONE_BORDER, TEXT_COLOR, TEXT_SIZE, border_radius, BUTTON_NONE};
 
+
 #[macro_export]
 macro_rules! base_button {
     ($commands:expr, $text:expr, $font:expr, $width:expr, $height:expr) => {
@@ -58,7 +59,7 @@ macro_rules! button {
 #[macro_export]
 macro_rules! short_button {
     ($commands:expr, $text:expr, $font:expr) => {
-        base_button!($commands, $text, $font, vmax(5.0), vmax(BUTTON_HEIGHT))
+        base_button!($commands, $text, $font, vmax(2.5), vmax(BUTTON_HEIGHT))
     };
 }
 
@@ -72,12 +73,7 @@ macro_rules! long_button {
 #[macro_export]
 macro_rules! button_cycle {
     ($commands:expr, $strings:expr, $font:expr) => {
-        row!($commands).with_children(|parent| {
-            short_button!(parent, "◀", $font);
-            button!(parent, $strings[0], $font);
-            short_button!(parent, "▶", $font);
-            parent.spawn(CycleButton::new($strings));
-        })
+
     }
 }
 

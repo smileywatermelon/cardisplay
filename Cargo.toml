@@ -19,6 +19,8 @@ mevy = "0.1.2"
 bevy_common_assets = { version = "0.12.0", features = ["json"] }
 serde = { version = "1.0.217", features = ["derive"] }
 
+cardisplay_macros = { path = "./cardisplay_macros" }
+
 [dependencies.bevy]
 version = "0.15.1"
 features = ["wav"]
