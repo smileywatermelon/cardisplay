@@ -7,7 +7,7 @@ use crate::core::helpers::prelude::set_grabmode;
 use crate::core::states::GameState;
 use crate::menus::helpers::definitions::{BUTTON_WIDTH, BUTTON_HEIGHT, button_padding, BUTTON_NONE_BORDER, TEXT_COLOR, TEXT_SIZE, border_radius, BUTTON_NONE, vmax, color};
 use crate::menus::helpers::components::{UiScaleEase, MenuMarker, Ease};
-use crate::player::states::ClientState;
+use crate::server::client::ClientState;
 
 pub(crate) fn spawn_pause_menu(
     mut commands: Commands,

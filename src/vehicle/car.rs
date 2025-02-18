@@ -14,5 +14,6 @@ impl Car {
     }
 }
 
+/// Specifies the client car
 #[derive(Component)]
 pub struct MainCar;

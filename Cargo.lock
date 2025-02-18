@@ -1655,19 +1655,10 @@ dependencies = [
  "bevy-inspector-egui",
  "bevy_common_assets",
  "bevy_rand",
- "cardisplay_macros",
  "leafwing-input-manager",
  "mevy",
  "rand_core",
  "serde",
-]
-
-[[package]]
-name = "cardisplay_macros"
-version = "0.1.0"
-dependencies = [
- "quote",
- "syn 2.0.98",
 ]
 
 [[package]]

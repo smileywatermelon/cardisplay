@@ -6,7 +6,6 @@ use crate::core::states::GameState;
 pub enum SingleplayerState {
     #[default]
     SpawnWorld,
-    SpawnPlayer,
     SpawnVehicles,
     Finished
 }

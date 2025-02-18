@@ -1,6 +1,5 @@
 pub mod core;
 pub mod vehicle;
-pub mod player;
 pub mod world;
 pub mod menus;
 mod debug;
@@ -14,7 +13,6 @@ use crate::vehicle::VehiclePlugin;
 use crate::core::CorePlugin;
 use crate::debug::DebugPlugin;
 use crate::menus::MenuPlugin;
-use crate::player::PlayerPlugin;
 use crate::server::ServerPlugin;
 use crate::world::WorldPlugin;
 
@@ -46,7 +44,6 @@ fn main() {
             // Game
             ServerPlugin,
             WorldPlugin,
-            PlayerPlugin,
             VehiclePlugin
             ))
         .run();

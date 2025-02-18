@@ -14,7 +14,7 @@ use crate::menus::main::singleplayer::spawn_singleplayer_menu;
 use crate::menus::main::settings::{spawn_settings, spawn_audio, spawn_controls};
 use crate::menus::setup::spawn_menu;
 use crate::menus::states::{MainMenuState, SettingsMenuState};
-use crate::player::states::ClientState;
+use crate::server::client::ClientState;
 
 pub struct MenuPlugin;
 

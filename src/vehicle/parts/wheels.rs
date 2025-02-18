@@ -19,6 +19,7 @@ impl Wheels {
 }
 
 pub struct Wheel {
+    pub hit: bool,
     pub rpm: f32,
     pub grip: f32,
     pub angle: f32
@@ -27,6 +28,7 @@ pub struct Wheel {
 impl Default for Wheel {
     fn default() -> Self {
         Self {
+            hit: false,
             rpm: 0.0,
             grip: 0.5,
             angle: 0.0

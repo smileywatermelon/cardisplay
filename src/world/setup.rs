@@ -23,17 +23,7 @@ pub(crate) fn spawn_singleplayer_world(
         WorldComponent
     ));
 
-    commands.spawn((
-        RigidBody::Dynamic,
-        Collider::cylinder(1.0, 5.0),
-        Mesh3d(meshes.add(Cylinder::new(1.0, 5.0))),
-        MeshMaterial3d(materials.add(Color::srgb_u8(232, 120, 56))),
-        Transform::from_xyz(-5.0, 0.0, 0.0),
-        Name::new("Cylinder"),
-        WorldComponent,
-    ));
-
-    singleplayer.set(SingleplayerState::SpawnPlayer)
+    singleplayer.set(SingleplayerState::SpawnVehicles)
 }
 
 pub(crate) fn despawn_world(

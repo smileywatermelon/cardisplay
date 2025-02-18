@@ -1,3 +1,4 @@
+use avian3d::prelude::{Collider, Friction, RigidBody};
 use bevy::prelude::*;
 use crate::core::states::GameState;
 use crate::server::states::SingleplayerState;
@@ -8,11 +9,19 @@ pub(crate) fn spawn_car(
     mut singleplayer: ResMut<NextState<SingleplayerState>>,
     assets: Res<AssetServer>,
 ) {
-    commands.spawn(Car::main_car());
-
     commands.spawn((
-        SceneRoot(assets.load("mesh/car.glb")),
+        Car::main_car(),
+        SceneRoot(assets.load(
+            GltfAssetLabel::Scene(0).from_asset("mesh/car.glb")
+        )),
         Transform::from_xyz(0.0, 0.0, -5.0),
+        RigidBody::Static,
+        Collider::cuboid(
+            1.430 * 2.0,
+            0.408 * 2.0,
+            2.470 * 2.0
+        ),
+        Friction::new(0.5)
     ));
 
     singleplayer.set(SingleplayerState::Finished)
