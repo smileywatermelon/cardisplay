@@ -4,7 +4,7 @@ use crate::core::states::GameState;
 use crate::server::client::ClientState;
 use crate::server::states::SingleplayerState;
 use crate::vehicle::setup::{despawn_car, spawn_car};
-use crate::vehicle::controls::{handle_camera, CarActions};
+use crate::vehicle::controls::{handle_axes, handle_camera, CarActions};
 
 pub mod parts;
 pub mod car;
@@ -21,7 +21,8 @@ impl Plugin for VehiclePlugin {
             .add_systems(OnExit(GameState::Running), despawn_car)
 
             .add_systems(Update, (
-                handle_camera
+                handle_camera,
+                handle_axes,
                 ).run_if(in_state(ClientState::Running).and(in_state(GameState::Running))))
         ;
 

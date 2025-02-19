@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::core::states::GameState;
 use crate::server::states::SingleplayerState;
 use crate::vehicle::car::Car;
+use crate::vehicle::controls::CarActions;
 
 pub(crate) fn spawn_car(
     mut commands: Commands,
@@ -14,8 +15,8 @@ pub(crate) fn spawn_car(
         SceneRoot(assets.load(
             GltfAssetLabel::Scene(0).from_asset("mesh/car.glb")
         )),
-        Transform::from_xyz(0.0, 0.0, -5.0),
-        RigidBody::Static,
+        Transform::from_xyz(0.0, 5.0, -5.0),
+        RigidBody::Dynamic,
         Collider::cuboid(
             1.430 * 2.0,
             0.408 * 2.0,
@@ -23,6 +24,8 @@ pub(crate) fn spawn_car(
         ),
         Friction::new(0.5)
     ));
+
+    commands.spawn(CarActions::new());
 
     singleplayer.set(SingleplayerState::Finished)
 }

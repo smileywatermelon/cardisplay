@@ -1,3 +1,4 @@
+use avian3d::prelude::{AngularVelocity, LinearVelocity};
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 use crate::vehicle::car::MainCar;
@@ -60,16 +61,25 @@ pub fn handle_camera(
     if let Ok(car) = car.get_single() {
         let mut camera = camera.single_mut();
 
-        let offset = Vec3::new(0.0, 5.0, 10.0);
+        let offset = Vec3::new(0.0, 5.0, -10.0);
         let rotated_offset = car.rotation.mul_vec3(offset);
 
         camera.translation = car.translation + rotated_offset;
         camera.look_at(car.translation, Vec3::Y);
-        println!("Hello")
     }
-    println!("Outside")
 }
 
-pub fn handle_axes() {
+pub fn handle_axes(
+    mut car: Query<(&mut LinearVelocity, &mut AngularVelocity), With<MainCar>>,
+    controls: Query<&ActionState<CarActions>>
+) {
+    let (mut linear, mut angular) = car.single_mut();
+    let controls = controls.single();
 
+    let throttle = controls.clamped_value(&CarActions::Throttle);
+    let brake = controls.clamped_value(&CarActions::Brake);
+    let turn = controls.clamped_value(&CarActions::Turn);
+
+    linear.z = throttle * 10.0;
+    angular.0 = Vec3::new(0.0, turn, 0.0);
 }
