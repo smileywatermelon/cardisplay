@@ -1,6 +1,9 @@
 use bevy::prelude::*;
+use bevy_inspector_egui::prelude::*;
+use bevy_inspector_egui::inspector_options::std_options::NumberDisplay;
 
-#[derive(Component)]
+#[derive(Component, Reflect, InspectorOptions)]
+#[reflect(InspectorOptions)]
 pub struct Transmission {
     ratios: Vec<f32>,
     reverse: f32,

@@ -5,6 +5,7 @@ use crate::server::client::ClientState;
 use crate::server::states::SingleplayerState;
 use crate::vehicle::setup::{despawn_car, spawn_car};
 use crate::vehicle::controls::{handle_axes, handle_camera, CarActions};
+use crate::vehicle::parts::prelude::*;
 
 pub mod parts;
 pub mod car;
@@ -24,6 +25,11 @@ impl Plugin for VehiclePlugin {
                 handle_camera,
                 handle_axes,
                 ).run_if(in_state(ClientState::Running).and(in_state(GameState::Running))))
+
+            // Inspector registers
+            .register_type::<Engine>()
+            .register_type::<EngineSetup>()
+            .register_type::<Transmission>()
         ;
 
     }

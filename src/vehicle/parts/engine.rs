@@ -1,21 +1,29 @@
 use bevy::prelude::*;
-
-#[derive(Component)]
+use bevy_inspector_egui::prelude::*;
+use bevy_inspector_egui::inspector_options::std_options::NumberDisplay;
+#[derive(Component, Reflect, InspectorOptions)]
+#[reflect(InspectorOptions)]
 #[require(EngineSetup)]
 pub struct Engine {
     // Engine RPMS
     /// Current Engine RPM
+    #[inspector(min = 0.0, max = 15000.0, display = NumberDisplay::Slider)]
     rpm: f32,
     /// Engine idle RPM
+    #[inspector(min = 0.0, max = 3000.0, display = NumberDisplay::Slider)]
     initial: f32,
     /// Engine red line RPM
+    #[inspector(min = 0.0, max = 15000.0, display = NumberDisplay::Slider)]
     redline: f32,
     /// Engine Throttle
+    #[inspector(min = 0.0, max = 1.0, display = NumberDisplay::Slider)]
     throttle: f32,
     // Engine (De)Acceleration
     /// Acceleration
+    #[inspector(min = 1.0, max = 10000.0, display = NumberDisplay::Slider)]
     accel_rate: f32,
     /// Deceleration
+    #[inspector(min = 1.0, max = 10000.0, display = NumberDisplay::Slider)]
     decel_rate: f32,
     /// Is the Engine on?
     on: bool,
@@ -97,7 +105,8 @@ impl Default for Engine {
     }
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Reflect, InspectorOptions)]
+#[reflect(InspectorOptions)]
 pub enum EngineSetup {
     /// Inline 4 Engine
     #[default]
