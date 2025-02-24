@@ -2,6 +2,7 @@ use avian3d::prelude::{AngularVelocity, LinearVelocity};
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 use crate::vehicle::car::MainCar;
+use crate::vehicle::parts::prelude::*;
 
 #[derive(Actionlike, Clone, Copy, PartialEq, Eq, Hash, Debug, Reflect)]
 pub enum CarActions {
@@ -19,6 +20,10 @@ pub enum CarActions {
     KThrottle,
     /// `S` by default
     KBrake,
+    /// `A` by default
+    KTurnLeft,
+    /// `D` by default
+    KTurnRight,
 
     /// `West` | `Space` by default
     HandBrake,
@@ -45,6 +50,8 @@ impl CarActions {
 
             .with(CarActions::KThrottle, KeyCode::KeyW)
             .with(CarActions::KBrake, KeyCode::KeyS)
+            .with(CarActions::KTurnLeft, KeyCode::KeyA)
+            .with(CarActions::KTurnRight, KeyCode::KeyD)
             .with(CarActions::HandBrake, KeyCode::Space)
             .with(CarActions::GearUp, KeyCode::KeyE)
             .with(CarActions::GearDown, KeyCode::KeyQ)
@@ -69,17 +76,54 @@ pub fn handle_camera(
     }
 }
 
-pub fn handle_axes(
-    mut car: Query<(&mut LinearVelocity, &mut AngularVelocity), With<MainCar>>,
+pub fn handle_controls(
+    mut car: Query<(
+        &mut Engine,
+        &mut Transmission,
+        &mut Wheels,
+        &DriveTrain,
+        &mut LinearVelocity,
+        &mut AngularVelocity,
+    ), With<MainCar>>,
     controls: Query<&ActionState<CarActions>>
 ) {
-    let (mut linear, mut angular) = car.single_mut();
+    let (mut engine, mut transmission, mut wheels, drivetrain, mut linear, mut angular) = car.single_mut();
+    let prev_ratio = transmission.ratio();
+
     let controls = controls.single();
 
-    let throttle = controls.clamped_value(&CarActions::Throttle);
-    let brake = controls.clamped_value(&CarActions::Brake);
-    let turn = controls.clamped_value(&CarActions::Turn);
+    // Button Controls
 
-    linear.z = throttle * 10.0;
-    angular.0 = Vec3::new(0.0, turn, 0.0);
+    if controls.just_pressed(&CarActions::GearUp) {
+        transmission.gear_up();
+
+        let ratio = transmission.ratio();
+        engine.shift_rpm(prev_ratio, ratio);
+
+        info!("↑ {} - {}", transmission.ratio(), engine.rpm())
+    } else if controls.just_pressed(&CarActions::GearDown) {
+        transmission.gear_down();
+
+        let ratio = transmission.ratio();
+        engine.shift_rpm(prev_ratio, ratio);
+
+        info!("↓ {} - {}", transmission.ratio(), engine.rpm())
+    }
+
+    // Axes Controls
+
+    // Pedals
+    let throttle = controls.clamped_value(&CarActions::Throttle);
+    let kthrottle = controls.pressed(&CarActions::KThrottle) as i32 as f32;
+    let brake = controls.clamped_value(&CarActions::Brake);
+
+    engine.set_throttle(kthrottle);
+
+    // Steering
+
+    let turn = controls.clamped_value(&CarActions::Turn);
+    let kturn = (controls.pressed(&CarActions::KTurnRight) as i32 - controls.pressed(&CarActions::KTurnLeft) as i32) as f32;
+
+    wheels.tl.angle = kturn * 30.0;
+    wheels.tr.angle = kturn * 30.0;
 }

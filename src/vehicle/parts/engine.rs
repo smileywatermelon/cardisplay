@@ -75,6 +75,15 @@ impl Engine {
         }
     }
 
+    pub fn shift_rpm(&mut self, prev_ratio: f32, ratio: f32) {
+        if prev_ratio == 0.0 || ratio == 0.0 {
+            return
+        }
+
+        let multiplier = ratio / prev_ratio;
+        self.rpm *= multiplier;
+    }
+
     // Getters
     pub fn rpm(&self) -> f32 { self.rpm }
     pub fn initial(&self) -> f32 { self.initial }

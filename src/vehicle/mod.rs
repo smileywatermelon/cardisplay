@@ -3,8 +3,9 @@ use leafwing_input_manager::plugin::InputManagerPlugin;
 use crate::core::states::GameState;
 use crate::server::client::ClientState;
 use crate::server::states::SingleplayerState;
+use crate::vehicle::car::handle_car;
 use crate::vehicle::setup::{despawn_car, spawn_car};
-use crate::vehicle::controls::{handle_axes, handle_camera, CarActions};
+use crate::vehicle::controls::{handle_camera, handle_controls, CarActions};
 use crate::vehicle::parts::prelude::*;
 
 pub mod parts;
@@ -23,8 +24,11 @@ impl Plugin for VehiclePlugin {
 
             .add_systems(Update, (
                 handle_camera,
-                handle_axes,
-                ).run_if(in_state(ClientState::Running).and(in_state(GameState::Running))))
+                handle_controls,
+                handle_car,
+                )
+                .chain()
+                .run_if(in_state(ClientState::Running).and(in_state(GameState::Running))))
 
             // Inspector registers
             .register_type::<Engine>()
