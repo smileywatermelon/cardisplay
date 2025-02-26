@@ -1,8 +1,9 @@
+use avian3d::prelude::LinearVelocity;
 use bevy::prelude::*;
 use bevy_inspector_egui::prelude::*;
 use bevy_inspector_egui::inspector_options::std_options::NumberDisplay;
 
-#[derive(Component, Reflect, InspectorOptions)]
+#[derive(Component, Default, Reflect, InspectorOptions)]
 #[reflect(InspectorOptions)]
 #[require(DriveTrain, Brakes)]
 pub struct Wheels {
@@ -19,14 +20,14 @@ impl Wheels {
                 Self {
                     tl: Wheel::powered(),
                     tr: Wheel::powered(),
-                    ..Default::default()
+                    ..default()
                 }
             },
             DriveTrain::RWD => {
                 Self {
                     bl: Wheel::powered(),
                     br: Wheel::powered(),
-                    ..Default::default()
+                    ..default()
                 }
             },
             DriveTrain::AWD => {
@@ -77,11 +78,36 @@ impl Default for Wheel {
     }
 }
 
+fn slip_ratio(rpm: f32, speed: f32) -> f32 {
+    let wheel_speed = rpm * 2.0 * PI * 0.3 / 60.0;
+
+    if speed.abs() < 0.1 {
+        0.0
+    } else {
+        (wheel_speed - speed) / speed.abs()
+    }
+}
+
 impl Wheel {
     pub fn powered() -> Self {
         let mut wheel = Self::default();
         wheel.powered = true;
         wheel
+    }
+
+    pub fn calculate_slip_ratio(&mut self, rpm: f32, total_ratio: f32, transform: Transform, linear: LinearVelocity) {
+        if !self.powered {
+            return
+        }
+    
+        self.rpm = rpm / total_ratio.abs();
+        self.slip = slip_ratio(self.rpm, transform.forward().dot(linear.0));
+    
+        if self.angle != 0.0 {
+            Quat::from_rotation_y(self.angle.to_radians()) * Vec3::Z
+        } else {
+            Vec3::Z
+        };
     }
 }
 

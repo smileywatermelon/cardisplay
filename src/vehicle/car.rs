@@ -18,33 +18,6 @@ impl Car {
 #[derive(Component)]
 pub struct MainCar;
 
-fn slip_ratio(rpm: f32, speed: f32) -> f32 {
-    let wheel_speed = rpm * 2.0 * PI * 0.3 / 60.0;
-
-    if speed.abs() < 0.1 {
-        0.0
-    } else {
-        (wheel_speed - speed) / speed.abs()
-    }
-}
-
-fn wheel_calculation(mut wheel: &mut Wheel, rpm: f32, total_ratio: f32, transform: Transform, linear: LinearVelocity) -> &mut Wheel {
-    if !wheel.powered {
-        return &mut wheel
-    }
-
-    wheel.rpm = rpm / total_ratio.abs();
-    wheel.slip = slip_ratio(wheel.rpm, transform.forward().dot(linear.0));
-
-    let direction = if wheel.angle != 0.0 {
-        Quat::from_rotation_y(wheel.angle.to_radians()) * Vec3::Z
-    } else {
-        Vec3::Z
-    };
-
-    &mut wheel
-}
-
 pub fn handle_car(
     mut car: Query<(
         &mut Engine,
@@ -65,21 +38,12 @@ pub fn handle_car(
     let total_ratio = transmission.ratio() * transmission.final_drive();
 
     // Probably need to add a torque curve
-    let engine_torque = engine.throttle() * engine.rpm() * 0.1;
+    let torque = engine.throttle() * engine.rpm() * 0.1;
 
     let mut force = Vec3::ZERO;
+    let rpm = engine.rpm();
 
-    for wheel in wheels.wheels {
-        if wheel
-        wheel.rpm = engine.rpm() / total_ratio.abs();
-        wheel.slip = slip_ratio(wheel.rpm, transform.forward().dot(linear.0));
-
-        let direction = if wheel.angle != 0.0 {
-            Quat::from_rotation_y(wheel.angle.to_radians()) * Vec3::Z
-        } else {
-            Vec3::Z
-        };
-    }
+    wheels.tl.calculate_slip_ratio(rpm, total_ratio, *transform, *linear);
 
     linear.0 += transform.rotation * force * time.delta_secs();
 
